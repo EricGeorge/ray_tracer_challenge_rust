@@ -1,74 +1,35 @@
 // TODO - re-enable dead_code warning
 // TODO - Refactor Tuple into Point and Vector and fix up test
-// TODO - Convert to a crate with both a library and multiple binaries
 #![allow(dead_code)]
 
 use approx::AbsDiffEq;
 use std::ops;
 
-fn main() {
-    exercise_1();
-}
-
-struct Projectile {
-    position: Tuple,
-    velocity: Tuple,
-}
-
-struct Environment {
-    gravity: Tuple,
-    wind: Tuple,
-}
-
-fn exercise_1() {
-    let e = Environment {
-        gravity: vector(0.0, -0.1, 0.0),
-        wind: vector(-0.01, 0.0, 0.0),
-    };
-
-    let mut p = Projectile {
-        position: point(0.0, 1.0, 0.0),
-        velocity: (vector(1.0, 1.0, 0.0).normalize()) * 10.0,
-    };
-
-    let mut ticks = 0;
-
-    while p.position.y > 0.0 {
-        println!(
-            "Time: {:?}, x: {:?}, y: {:?}",
-            ticks, p.position.x, p.position.y
-        );
-        p.position = p.position + p.velocity;
-        p.velocity = p.velocity + e.gravity + e.wind;
-        ticks += 1;
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
-struct Tuple {
-    x: f64,
-    y: f64,
-    z: f64,
-    w: f64,
+pub struct Tuple {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub w: f64,
 }
 
-fn is_point(t: &Tuple) -> bool {
+pub fn is_point(t: &Tuple) -> bool {
     t.w == 1.0
 }
 
-fn is_vector(t: &Tuple) -> bool {
+pub fn is_vector(t: &Tuple) -> bool {
     t.w == 0.0
 }
 
-fn point(x: f64, y: f64, z: f64) -> Tuple {
+pub fn point(x: f64, y: f64, z: f64) -> Tuple {
     Tuple { x, y, z, w: 1.0 }
 }
 
-fn vector(x: f64, y: f64, z: f64) -> Tuple {
+pub fn vector(x: f64, y: f64, z: f64) -> Tuple {
     Tuple { x, y, z, w: 0.0 }
 }
 
-fn tuple(x: f64, y: f64, z: f64, w: f64) -> Tuple {
+pub fn tuple(x: f64, y: f64, z: f64, w: f64) -> Tuple {
     Tuple { x, y, z, w }
 }
 
@@ -160,28 +121,28 @@ impl AbsDiffEq for Tuple {
 }
 
 impl Tuple {
-    fn is_point(&self) -> bool {
+    pub fn is_point(&self) -> bool {
         self.w == 1.0
     }
 
-    fn is_vector(&self) -> bool {
+    pub fn is_vector(&self) -> bool {
         self.w == 0.0
     }
 
-    fn magnitude(&self) -> f64 {
+    pub fn magnitude(&self) -> f64 {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
     }
 
-    fn normalize(&self) -> Self {
+    pub fn normalize(&self) -> Self {
         let m = self.magnitude();
         tuple(self.x / m, self.y / m, self.z / m, self.w / m)
     }
 
-    fn dot(&self, other: &Self) -> f64 {
+    pub fn dot(&self, other: &Self) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w
     }
 
-    fn cross(&self, other: &Self) -> Self {
+    pub fn cross(&self, other: &Self) -> Self {
         vector(
             self.y * other.z - self.z * other.y,
             self.z * other.x - self.x * other.z,
