@@ -1,5 +1,12 @@
 use super::color::Color;
-//TODO - Implement logic to split lines longer than PPM_MAX_LINE_LEN to pass ppm_split_long_lines test
+use itertools::Itertools;
+use std::fs;
+
+// TODO:  Spend more time understanding all the iterator use below
+// TODO:  Spend some time learning about the string use below
+// TODO:  How do I save to a non-existing folder?
+// TODO:  Explore Itertools and see if I can do this without them
+// TODO:  Implement a schema for use ordering in all the files
 
 pub struct Canvas {
     pub width: usize,
@@ -39,36 +46,38 @@ impl Canvas {
     }
 
     pub fn to_ppm(&self) -> String {
-        let mut ppm = String::new();
-
-        ppm.push_str(
-            format!(
-                "{}\n{} {}\n{}\n",
-                Self::PPM_IDENTIFIER,
-                self.width,
-                self.height,
-                Self::PPM_MAX_COLOR_VALUE
-            )
-            .as_str(),
+        let mut ppm = format!(
+            "{}\n{} {}\n{}\n",
+            Self::PPM_IDENTIFIER,
+            self.width,
+            self.height,
+            Self::PPM_MAX_COLOR_VALUE
         );
 
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let pixel = self.pixel_at(x, y);
+        // convert row of pixels to string of rgb values
+        for row in self.pixels.chunks(self.width) {
+            let mut colors = row
+                .iter()
+                .flat_map(|color| {
+                    vec![
+                        Self::scale_to_ppm_data(color.red),
+                        Self::scale_to_ppm_data(color.green),
+                        Self::scale_to_ppm_data(color.blue),
+                    ]
+                })
+                .map(|color| color.to_string())
+                .peekable();
 
-                let pixel_color = format!(
-                    "{} {} {}",
-                    Self::scale_to_ppm_data(pixel.red),
-                    Self::scale_to_ppm_data(pixel.green),
-                    Self::scale_to_ppm_data(pixel.blue)
-                );
-
-                ppm.push_str(pixel_color.as_str());
-                if x == self.width - 1 {
-                    ppm.push('\n');
-                } else {
-                    ppm.push(' ');
-                }
+            while colors.peek().is_some() {
+                let mut line_len = 0;
+                let line = colors
+                    .take_while_ref(|color| {
+                        line_len += color.len() + 1;
+                        line_len <= Self::PPM_MAX_LINE_LEN as usize
+                    })
+                    .join(" ");
+                ppm.push_str(&line);
+                ppm.push('\n')
             }
         }
 
@@ -80,6 +89,12 @@ impl Canvas {
         let scaled_data = color_scale * max_color_val;
 
         scaled_data.clamp(0.0, max_color_val).round() as u8
+    }
+
+    pub fn write_ppm(&self, filename: &str) {
+        let ppm = self.to_ppm();
+
+        fs::write(filename, ppm).expect("file should be written successfully");
     }
 }
 

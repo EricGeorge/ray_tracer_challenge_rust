@@ -1,5 +1,8 @@
 #Cargo
 /target
 
+#Project Specific
+*.ppm
+
 #Other
 .DS_Store
