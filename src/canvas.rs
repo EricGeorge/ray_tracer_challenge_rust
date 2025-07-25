@@ -1,4 +1,5 @@
 use super::color::Color;
+//TODO - Implement logic to split lines longer than PPM_MAX_LINE_LEN to pass ppm_split_long_lines test
 
 pub struct Canvas {
     pub width: usize,
@@ -38,32 +39,35 @@ impl Canvas {
     }
 
     pub fn to_ppm(&self) -> String {
-        let mut ppm = format!(
-            "{}\n{} {}\n{}\n",
-            Self::PPM_IDENTIFIER,
-            self.width,
-            self.height,
-            Self::PPM_MAX_COLOR_VALUE
+        let mut ppm = String::new();
+
+        ppm.push_str(
+            format!(
+                "{}\n{} {}\n{}\n",
+                Self::PPM_IDENTIFIER,
+                self.width,
+                self.height,
+                Self::PPM_MAX_COLOR_VALUE
+            )
+            .as_str(),
         );
 
-        let mut line = String::new();
         for y in 0..self.height {
             for x in 0..self.width {
                 let pixel = self.pixel_at(x, y);
 
                 let pixel_color = format!(
-                    "{} {} {} ",
+                    "{} {} {}",
                     Self::scale_to_ppm_data(pixel.red),
                     Self::scale_to_ppm_data(pixel.green),
                     Self::scale_to_ppm_data(pixel.blue)
                 );
 
-                if (line.len() + pixel_color.len()) > Self::PPM_MAX_LINE_LEN as usize {
-                    line.push('\n');
-                    ppm.push_str(line.as_str());
-                    line.clear();
+                ppm.push_str(pixel_color.as_str());
+                if x == self.width - 1 {
+                    ppm.push('\n');
                 } else {
-                    line.push_str(pixel_color.as_str());
+                    ppm.push(' ');
                 }
             }
         }
@@ -140,5 +144,49 @@ mod tests {
         assert_eq!(lines.next().unwrap(), "0 0 0 0 0 0 0 128 0 0 0 0 0 0 0");
         assert_eq!(lines.next().unwrap(), "0 0 0 0 0 0 0 0 0 0 0 0 0 0 255");
         assert!(lines.next().is_none());
+    }
+
+    #[test]
+    fn ppm_split_long_lines() {
+        let mut canvas = Canvas::empty(10, 2);
+
+        for row in 0..canvas.height {
+            for col in 0..canvas.width {
+                canvas.write_pixel(col, row, Color::new(1.0, 0.8, 0.6));
+            }
+        }
+
+        let ppm = canvas.to_ppm();
+
+        let mut lines = ppm.lines();
+        lines.next();
+        lines.next();
+        lines.next();
+
+        assert_eq!(
+            lines.next().unwrap(),
+            "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204"
+        );
+        assert_eq!(
+            lines.next().unwrap(),
+            "153 255 204 153 255 204 153 255 204 153 255 204 153"
+        );
+        assert_eq!(
+            lines.next().unwrap(),
+            "255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204"
+        );
+        assert_eq!(
+            lines.next().unwrap(),
+            "153 255 204 153 255 204 153 255 204 153 255 204 153"
+        );
+    }
+
+    #[test]
+    fn ppm_terminate_with_newline() {
+        let canvas = Canvas::empty(5, 3);
+
+        let ppm = canvas.to_ppm();
+
+        assert!(ppm.ends_with('\n'));
     }
 }
