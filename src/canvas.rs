@@ -1,11 +1,9 @@
 use super::color::Color;
-use itertools::Itertools;
 use std::fs;
 
 // TODO:  Spend more time understanding all the iterator use below
 // TODO:  Spend some time learning about the string use below
 // TODO:  How do I save to a non-existing folder?
-// TODO:  Explore Itertools and see if I can do this without them
 // TODO:  Implement a schema for use ordering in all the files
 
 pub struct Canvas {
@@ -54,33 +52,45 @@ impl Canvas {
             Self::PPM_MAX_COLOR_VALUE
         );
 
-        // convert row of pixels to string of rgb values
+        // alternative version that uses only std library (helped from ChatGPT)
         for row in self.pixels.chunks(self.width) {
-            let mut colors = row
-                .iter()
-                .flat_map(|color| {
-                    vec![
-                        Self::scale_to_ppm_data(color.red),
-                        Self::scale_to_ppm_data(color.green),
-                        Self::scale_to_ppm_data(color.blue),
-                    ]
-                })
-                .map(|color| color.to_string())
-                .peekable();
+            // Step 1: Flatten row into a Vec<String> of scaled R, G, B values
+            let mut color_strings = Vec::new();
+            for color in row {
+                color_strings.push(Self::scale_to_ppm_data(color.red).to_string());
+                color_strings.push(Self::scale_to_ppm_data(color.green).to_string());
+                color_strings.push(Self::scale_to_ppm_data(color.blue).to_string());
+            }
 
-            while colors.peek().is_some() {
-                let mut line_len = 0;
-                let line = colors
-                    .take_while_ref(|color| {
-                        line_len += color.len() + 1;
-                        line_len <= Self::PPM_MAX_LINE_LEN as usize
-                    })
-                    .join(" ");
+            // Step 2: Write lines without exceeding PPM_MAX_LINE_LEN
+            let mut line = String::new();
+            let mut line_len = 0;
+
+            for color in color_strings.into_iter() {
+                let color_len = color.len();
+                let sep = if line_len == 0 { "" } else { " " };
+                let addition_len = sep.len() + color_len;
+
+                if line_len + addition_len > Self::PPM_MAX_LINE_LEN as usize {
+                    ppm.push_str(&line);
+                    ppm.push('\n');
+                    line.clear();
+                    line_len = 0;
+                }
+
+                if !line.is_empty() {
+                    line.push(' ');
+                }
+                line.push_str(&color);
+                line_len += addition_len;
+            }
+
+            // Push any remaining line content
+            if !line.is_empty() {
                 ppm.push_str(&line);
-                ppm.push('\n')
+                ppm.push('\n');
             }
         }
-
         ppm
     }
 
