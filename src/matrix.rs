@@ -2,6 +2,9 @@ use std::ops;
 
 use approx::AbsDiffEq;
 
+use super::point::Point;
+use super::vector::Vector;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Matrix<const N: usize>([[f64; N]; N]);
 
@@ -10,6 +13,50 @@ impl<const N: usize> ops::Index<usize> for Matrix<N> {
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.0[index]
+    }
+}
+
+impl<const N: usize> ops::Mul for Matrix<N> {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self::Output {
+        let mut m = Self([[0.0; N]; N]);
+
+        for r in 0..N {
+            for c in 0..N {
+                for i in 0..N {
+                    m[r][c] += self[r][i] * other[i][c]
+                }
+            }
+        }
+        m
+    }
+}
+
+impl ops::Mul<Point> for Matrix<4> {
+    type Output = Point;
+
+    fn mul(self, other: Point) -> Self::Output {
+        // Point has an implicit 4th value that is equal to 1.0 so it matches the Matrix
+        Self::Output::new(
+            self[0][0] * other.x + self[0][1] * other.y + self[0][2] * other.z + self[0][3],
+            self[1][0] * other.x + self[1][1] * other.y + self[1][2] * other.z + self[1][3],
+            self[2][0] * other.x + self[2][1] * other.y + self[2][2] * other.z + self[2][3],
+        )
+    }
+}
+
+// Since we don't have a generalized Tuple, implementing this for Vector type also, but
+// same as Point type with an implicit 4th value that is 1.0
+impl ops::Mul<Vector> for Matrix<4> {
+    type Output = Vector;
+
+    fn mul(self, other: Vector) -> Self::Output {
+        Self::Output::new(
+            self[0][0] * other.x + self[0][1] * other.y + self[0][2] * other.z + self[0][3],
+            self[1][0] * other.x + self[1][1] * other.y + self[1][2] * other.z + self[1][3],
+            self[2][0] * other.x + self[2][1] * other.y + self[2][2] * other.z + self[2][3],
+        )
     }
 }
 
@@ -112,5 +159,60 @@ mod tests {
         ]);
 
         assert_abs_diff_ne!(m1, m2);
+    }
+
+    #[test]
+    fn multiple_matrices() {
+        let m1 = Matrix([
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 8.0, 7.0, 6.0],
+            [5.0, 4.0, 3.0, 2.0],
+        ]);
+
+        let m2 = Matrix([
+            [-2.0, 1.0, 2.0, 3.0],
+            [3.0, 2.0, 1.0, -1.0],
+            [4.0, 3.0, 6.0, 5.0],
+            [1.0, 2.0, 7.0, 8.0],
+        ]);
+
+        assert_abs_diff_eq!(
+            m1 * m2,
+            Matrix([
+                [20.0, 22.0, 50.0, 48.0],
+                [44.0, 54.0, 114.0, 108.0],
+                [40.0, 58.0, 110.0, 102.0],
+                [16.0, 26.0, 46.0, 42.0],
+            ])
+        );
+    }
+
+    #[test]
+    fn multiple_matrix_by_point() {
+        let m = Matrix([
+            [1.0, 2.0, 3.0, 4.0],
+            [2.0, 4.0, 4.0, 2.0],
+            [8.0, 6.0, 4.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]);
+
+        let p = Point::new(1.0, 2.0, 3.0);
+
+        assert_abs_diff_eq!(m * p, Point::new(18.0, 24.0, 33.0));
+    }
+
+    #[test]
+    fn multiple_matrix_by_vector() {
+        let m = Matrix([
+            [1.0, 2.0, 3.0, 4.0],
+            [2.0, 4.0, 4.0, 2.0],
+            [8.0, 6.0, 4.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]);
+
+        let p = Vector::new(1.0, 2.0, 3.0);
+
+        assert_abs_diff_eq!(m * p, Vector::new(18.0, 24.0, 33.0));
     }
 }
