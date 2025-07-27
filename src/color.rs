@@ -1,5 +1,6 @@
-use approx::AbsDiffEq;
 use std::ops;
+
+use approx::AbsDiffEq;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Color {

@@ -1,10 +1,6 @@
-use super::color::Color;
 use std::fs;
 
-// TODO:  Spend more time understanding all the iterator use below
-// TODO:  Spend some time learning about the string use below
-// TODO:  How do I save to a non-existing folder?
-// TODO:  Implement a schema for use ordering in all the files
+use super::color::Color;
 
 pub struct Canvas {
     pub width: usize,
