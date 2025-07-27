@@ -37,7 +37,8 @@ impl ops::Mul<Point> for Matrix<4> {
     type Output = Point;
 
     fn mul(self, other: Point) -> Self::Output {
-        // Point has an implicit 4th value that is equal to 1.0 so it matches the Matrix
+        // Due to homogeneous coordinates, Point has an implicit 4th value that is
+        // equal to 1.0 so it matches the 4x4 Matrix
         Self::Output::new(
             self[0][0] * other.x + self[0][1] * other.y + self[0][2] * other.z + self[0][3],
             self[1][0] * other.x + self[1][1] * other.y + self[1][2] * other.z + self[1][3],
@@ -46,16 +47,16 @@ impl ops::Mul<Point> for Matrix<4> {
     }
 }
 
-// Since we don't have a generalized Tuple, implementing this for Vector type also, but
-// same as Point type with an implicit 4th value that is 1.0
 impl ops::Mul<Vector> for Matrix<4> {
     type Output = Vector;
 
     fn mul(self, other: Vector) -> Self::Output {
+        // Due to homogeneous coordinates, Vector has an implicit 4th value that is
+        // equal to 0.0 so it matches the 4x4 Matrix
         Self::Output::new(
-            self[0][0] * other.x + self[0][1] * other.y + self[0][2] * other.z + self[0][3],
-            self[1][0] * other.x + self[1][1] * other.y + self[1][2] * other.z + self[1][3],
-            self[2][0] * other.x + self[2][1] * other.y + self[2][2] * other.z + self[2][3],
+            self[0][0] * other.x + self[0][1] * other.y + self[0][2] * other.z,
+            self[1][0] * other.x + self[1][1] * other.y + self[1][2] * other.z,
+            self[2][0] * other.x + self[2][1] * other.y + self[2][2] * other.z,
         )
     }
 }
@@ -213,6 +214,6 @@ mod tests {
 
         let p = Vector::new(1.0, 2.0, 3.0);
 
-        assert_abs_diff_eq!(m * p, Vector::new(18.0, 24.0, 33.0));
+        assert_abs_diff_eq!(m * p, Vector::new(14.0, 22.0, 32.0));
     }
 }
