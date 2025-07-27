@@ -8,6 +8,20 @@ use super::vector::Vector;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Matrix<const N: usize>([[f64; N]; N]);
 
+impl<const N: usize> Matrix<N> {
+    const ZERO: Self = Self([[0.0; N]; N]);
+
+    pub fn identity() -> Self {
+        let mut m = Self::ZERO;
+
+        for i in 0..N {
+            m[i][i] = 1.0;
+        }
+
+        m
+    }
+}
+
 impl<const N: usize> ops::Index<usize> for Matrix<N> {
     type Output = [f64; N];
 
@@ -163,7 +177,7 @@ mod tests {
     }
 
     #[test]
-    fn multiple_matrices() {
+    fn multiply_matrices() {
         let m1 = Matrix([
             [1.0, 2.0, 3.0, 4.0],
             [5.0, 6.0, 7.0, 8.0],
@@ -190,7 +204,7 @@ mod tests {
     }
 
     #[test]
-    fn multiple_matrix_by_point() {
+    fn multiply_matrix_by_point() {
         let m = Matrix([
             [1.0, 2.0, 3.0, 4.0],
             [2.0, 4.0, 4.0, 2.0],
@@ -204,7 +218,7 @@ mod tests {
     }
 
     #[test]
-    fn multiple_matrix_by_vector() {
+    fn multiply_matrix_by_vector() {
         let m = Matrix([
             [1.0, 2.0, 3.0, 4.0],
             [2.0, 4.0, 4.0, 2.0],
@@ -215,5 +229,35 @@ mod tests {
         let p = Vector::new(1.0, 2.0, 3.0);
 
         assert_abs_diff_eq!(m * p, Vector::new(14.0, 22.0, 32.0));
+    }
+
+    #[test]
+    fn multiply_matriix_by_identity() {
+        let m = Matrix([
+            [0.0, 1.0, 2.0, 4.0],
+            [1.0, 2.0, 4.0, 8.0],
+            [2.0, 4.0, 8.0, 16.0],
+            [4.0, 8.0, 16.0, 32.0],
+        ]);
+
+        let i = Matrix::identity();
+
+        assert_abs_diff_eq!(m * i, m);
+    }
+
+    #[test]
+    fn multiply_point_by_identity() {
+        let p = Point::new(1.0, 2.0, 3.0);
+        let i = Matrix::identity();
+
+        assert_abs_diff_eq!(i * p, p);
+    }
+
+    #[test]
+    fn multiply_vector_by_identity() {
+        let v = Vector::new(1.0, 2.0, 3.0);
+        let i = Matrix::identity();
+
+        assert_abs_diff_eq!(i * v, v);
     }
 }
