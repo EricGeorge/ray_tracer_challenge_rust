@@ -20,6 +20,16 @@ impl<const N: usize> Matrix<N> {
 
         m
     }
+
+    pub fn transpose(&self) -> Self {
+        let mut m = Self::ZERO;
+        for r in 0..N {
+            for c in 0..N {
+                m[c][r] = self[r][c];
+            }
+        }
+        m
+    }
 }
 
 impl<const N: usize> ops::Index<usize> for Matrix<N> {
@@ -259,5 +269,28 @@ mod tests {
         let i = Matrix::identity();
 
         assert_abs_diff_eq!(i * v, v);
+    }
+
+    #[test]
+    fn transpose_matrix() {
+        let m = Matrix([
+            [0.0, 9.0, 3.0, 0.0],
+            [9.0, 8.0, 0.0, 8.0],
+            [1.0, 8.0, 5.0, 3.0],
+            [0.0, 0.0, 5.0, 8.0],
+        ]);
+
+        let t = Matrix([
+            [0.0, 9.0, 1.0, 0.0],
+            [9.0, 8.0, 8.0, 0.0],
+            [3.0, 0.0, 5.0, 5.0],
+            [0.0, 8.0, 3.0, 8.0],
+        ]);
+        assert_abs_diff_eq!(m.transpose(), t)
+    }
+
+    #[test]
+    fn transpose_identity_matrix() {
+        assert_abs_diff_eq!(Matrix::<4>::identity().transpose(), Matrix::<4>::identity());
     }
 }
