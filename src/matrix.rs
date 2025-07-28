@@ -32,6 +32,74 @@ impl<const N: usize> Matrix<N> {
     }
 }
 
+impl Matrix<2> {
+    pub fn determinant(&self) -> f64 {
+        self[0][0] * self[1][1] - self[0][1] * self[1][0]
+    }
+}
+
+impl Matrix<3> {
+    pub fn submatrix(&self, row: usize, col: usize) -> Matrix<2> {
+        let mut m = Matrix::ZERO;
+
+        let mut i = 0;
+
+        for r in 0..3 {
+            if r == row {
+                continue;
+            }
+
+            let mut j = 0;
+            for c in 0..3 {
+                if c == col {
+                    continue;
+                }
+
+                m[i][j] = self[r][c];
+                j += 1;
+            }
+            i += 1;
+        }
+        m
+    }
+
+    pub fn minor(&self, row: usize, col: usize) -> f64 {
+        self.submatrix(row, col).determinant()
+    }
+
+    pub fn cofactor(&self, row: usize, col: usize) -> f64 {
+        let sign = if (row + col) % 2 == 0 { 1.0 } else { -1.0 };
+
+        sign * self.minor(row, col)
+    }
+}
+
+impl Matrix<4> {
+    pub fn submatrix(&self, row: usize, col: usize) -> Matrix<3> {
+        let mut m = Matrix::ZERO;
+
+        let mut i = 0;
+
+        for r in 0..4 {
+            if r == row {
+                continue;
+            }
+
+            let mut j = 0;
+            for c in 0..4 {
+                if c == col {
+                    continue;
+                }
+
+                m[i][j] = self[r][c];
+                j += 1;
+            }
+            i += 1;
+        }
+        m
+    }
+}
+
 impl<const N: usize> ops::Index<usize> for Matrix<N> {
     type Output = [f64; N];
 
@@ -292,5 +360,52 @@ mod tests {
     #[test]
     fn transpose_identity_matrix() {
         assert_abs_diff_eq!(Matrix::<4>::identity().transpose(), Matrix::<4>::identity());
+    }
+
+    #[test]
+    fn determinant_2x2() {
+        let m = Matrix([[1.0, 5.0], [-3.0, 2.0]]).determinant();
+        assert_abs_diff_eq!(m, 17.0);
+    }
+
+    #[test]
+    fn submatrix_3x3() {
+        let m = Matrix([[1.0, 5.0, 0.0], [-3.0, 2.0, 7.0], [0.0, 6., -3.0]]);
+        assert_abs_diff_eq!(m.submatrix(0, 2), Matrix([[-3.0, 2.0], [0.0, 6.0]]));
+    }
+
+    #[test]
+    fn submatrix_4x4() {
+        let m = Matrix([
+            [-6.0, 1.0, 1.0, 6.0],
+            [-8.0, 5.0, 8.0, 6.0],
+            [-1.0, 0.0, 8.0, 2.0],
+            [-7.0, 1.0, -1.0, 1.0],
+        ]);
+
+        assert_abs_diff_eq!(
+            m.submatrix(2, 1),
+            Matrix([[-6.0, 1.0, 6.0], [-8.0, 8.0, 6.0], [-7.0, -1.0, 1.0]])
+        );
+    }
+
+    #[test]
+    fn minor_3x3() {
+        let m = Matrix([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
+        let s = m.submatrix(1, 0);
+
+        assert_abs_diff_eq!(s.determinant(), 25.0);
+        assert_abs_diff_eq!(m.minor(1, 0), 25.0);
+    }
+
+    #[test]
+    fn cofactor_3x3() {
+        let m = Matrix([[3.0, 5.0, 0.0], [2.0, -1.0, -7.0], [6.0, -1.0, 5.0]]);
+
+        assert_abs_diff_eq!(m.minor(0, 0), -12.0);
+        assert_abs_diff_eq!(m.cofactor(0, 0), -12.0);
+
+        assert_abs_diff_eq!(m.minor(1, 0), 25.0);
+        assert_abs_diff_eq!(m.cofactor(1, 0), -25.0);
     }
 }
