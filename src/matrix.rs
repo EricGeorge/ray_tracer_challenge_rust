@@ -72,6 +72,14 @@ impl Matrix<3> {
 
         sign * self.minor(row, col)
     }
+
+    pub fn determinant(&self) -> f64 {
+        let mut det = 0.0;
+        for col in 0..3 {
+            det += self[0][col] * self.cofactor(0, col);
+        }
+        det
+    }
 }
 
 impl Matrix<4> {
@@ -97,6 +105,24 @@ impl Matrix<4> {
             i += 1;
         }
         m
+    }
+
+    pub fn minor(&self, row: usize, col: usize) -> f64 {
+        self.submatrix(row, col).determinant()
+    }
+
+    pub fn cofactor(&self, row: usize, col: usize) -> f64 {
+        let sign = if (row + col) % 2 == 0 { 1.0 } else { -1.0 };
+
+        sign * self.minor(row, col)
+    }
+
+    pub fn determinant(&self) -> f64 {
+        let mut det = 0.0;
+        for col in 0..4 {
+            det += self[0][col] * self.cofactor(0, col);
+        }
+        det
     }
 }
 
@@ -407,5 +433,55 @@ mod tests {
 
         assert_abs_diff_eq!(m.minor(1, 0), 25.0);
         assert_abs_diff_eq!(m.cofactor(1, 0), -25.0);
+    }
+
+    #[test]
+    fn determinant_3x3() {
+        let m = Matrix([[1.0, 2.0, 6.0], [-5.0, 8.0, -4.0], [2.0, 6.0, 4.0]]);
+
+        assert_abs_diff_eq!(m.cofactor(0, 0), 56.0);
+        assert_abs_diff_eq!(m.cofactor(0, 1), 12.0);
+        assert_abs_diff_eq!(m.cofactor(0, 2), -46.0);
+        assert_abs_diff_eq!(m.determinant(), -196.0);
+    }
+
+    #[test]
+    fn determinant_4x4() {
+        let m = Matrix([
+            [-2.0, -8.0, 3.0, 5.0],
+            [-3.0, 1.0, 7.0, 3.0],
+            [1.0, 2.0, -9.0, 6.0],
+            [-6.0, 7.0, 7.0, -9.0],
+        ]);
+
+        assert_abs_diff_eq!(m.cofactor(0, 0), 690.0);
+        assert_abs_diff_eq!(m.cofactor(0, 1), 447.0);
+        assert_abs_diff_eq!(m.cofactor(0, 2), 210.0);
+        assert_abs_diff_eq!(m.cofactor(0, 3), 51.0);
+        assert_abs_diff_eq!(m.determinant(), -4071.0);
+    }
+
+    #[test]
+    fn check_invertible() {
+        let a = Matrix([
+            [6.0, 4.0, 4.0, 4.0],
+            [5.0, 5.0, 7.0, 6.0],
+            [4.0, -9.0, 3.0, -7.0],
+            [9.0, 1.0, 7.0, -6.0],
+        ]);
+
+        assert_abs_diff_eq!(a.determinant(), -2120.0);
+    }
+
+    #[test]
+    fn check_noninvertible() {
+        let a = Matrix([
+            [-4.0, 2.0, -2.0, -3.0],
+            [9.0, 6.0, 2.0, 6.0],
+            [0.0, -5.0, 1.0, -5.0],
+            [0.0, 0.0, 0.0, 0.0],
+        ]);
+
+        assert_abs_diff_eq!(a.determinant(), 0.0);
     }
 }
