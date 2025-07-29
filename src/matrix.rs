@@ -124,6 +124,21 @@ impl Matrix<4> {
         }
         det
     }
+
+    pub fn inverse(&self) -> Self {
+        let det = self.determinant();
+        assert!(!(det == 0.0), "Matrix is not invertible");
+
+        let mut m = Self::ZERO;
+
+        for row in 0..4 {
+            for col in 0..4 {
+                let c = self.cofactor(row, col);
+                m[col][row] = c / det;
+            }
+        }
+        m
+    }
 }
 
 impl<const N: usize> ops::Index<usize> for Matrix<N> {
@@ -483,5 +498,71 @@ mod tests {
         ]);
 
         assert_abs_diff_eq!(a.determinant(), 0.0);
+    }
+
+    #[test]
+    fn inverse_4x4() {
+        let a = Matrix([
+            [-5.0, 2.0, 6.0, -8.0],
+            [1.0, -5.0, 1.0, 8.0],
+            [7.0, 7.0, -6.0, -7.0],
+            [1.0, -3.0, 7.0, 4.0],
+        ]);
+
+        let inv = a.inverse();
+
+        assert_abs_diff_eq!(a.determinant(), 532.0);
+        assert_abs_diff_eq!(a.cofactor(2, 3), -160.0);
+        assert_abs_diff_eq!(inv[3][2], -160.0 / 532.0);
+        assert_abs_diff_eq!(a.cofactor(3, 2), 105.0);
+        assert_abs_diff_eq!(inv[2][3], 105.0 / 532.0);
+        assert_abs_diff_eq!(
+            inv,
+            Matrix([
+                [0.21805, 0.45113, 0.24060, -0.04511],
+                [-0.80827, -1.45677, -0.44361, 0.52068],
+                [-0.07895, -0.22368, -0.05263, 0.19737],
+                [-0.52256, -0.81391, -0.30075, 0.30639],
+            ])
+        );
+    }
+
+    #[test]
+    fn inverse_4x4_2() {
+        let a = Matrix([
+            [8.0, -5.0, 9.0, 2.0],
+            [7.0, 5.0, 6.0, 1.0],
+            [-6.0, 0.0, 9.0, 6.0],
+            [-3.0, 0.0, -9.0, -4.0],
+        ]);
+
+        assert_abs_diff_eq!(
+            a.inverse(),
+            Matrix([
+                [-0.15385, -0.15385, -0.28205, -0.53846],
+                [-0.07692, 0.12308, 0.02564, 0.03077],
+                [0.35897, 0.35897, 0.43590, 0.92308],
+                [-0.69231, -0.69231, -0.76923, -1.92308],
+            ])
+        );
+    }
+
+    #[test]
+    fn multiply_product_inverse() {
+        let a = Matrix([
+            [3.0, -9.0, 7.0, 3.0],
+            [3.0, -8.0, 2.0, -9.0],
+            [-4.0, 4.0, 4.0, 1.0],
+            [-6.0, 5.0, -1.0, 1.0],
+        ]);
+
+        let b = Matrix([
+            [8.0, 2.0, 2.0, 2.0],
+            [3.0, -1.0, 7.0, 0.0],
+            [7.0, 0.0, 5.0, 4.0],
+            [6.0, -2.0, 0.0, 5.0],
+        ]);
+
+        assert_abs_diff_eq!(a * b * b.inverse(), a);
     }
 }
