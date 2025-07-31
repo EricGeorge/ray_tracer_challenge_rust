@@ -8,3 +8,6 @@ approx = "0.5.1"
 
 [[example]]
 name = "projectile"
+
+[[example]]
+name = "clock"
