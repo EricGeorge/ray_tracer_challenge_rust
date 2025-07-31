@@ -148,6 +148,60 @@ impl Matrix<4> {
             [0.0, 0.0, 0.0, 1.0],
         ])
     }
+
+    pub fn scaling(x: f64, y: f64, z: f64) -> Self {
+        Self([
+            [x, 0.0, 0.0, 0.0],
+            [0.0, y, 0.0, 0.0],
+            [0.0, 0.0, z, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+
+    pub fn rotation_x(radians: f64) -> Self {
+        let cos_r = radians.cos();
+        let sin_r = radians.sin();
+
+        Self([
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, cos_r, -sin_r, 0.0],
+            [0.0, sin_r, cos_r, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+
+    pub fn rotation_y(radians: f64) -> Self {
+        let cos_r = radians.cos();
+        let sin_r = radians.sin();
+
+        Self([
+            [cos_r, 0.0, sin_r, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [-sin_r, 0.0, cos_r, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+
+    pub fn rotation_z(radians: f64) -> Self {
+        let cos_r = radians.cos();
+        let sin_r = radians.sin();
+
+        Self([
+            [cos_r, -sin_r, 0.0, 0.0],
+            [sin_r, cos_r, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+
+    pub fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
+        Self([
+            [1.0, xy, xz, 0.0],
+            [yx, 1.0, yz, 0.0],
+            [zx, zy, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
 }
 
 impl<const N: usize> ops::Index<usize> for Matrix<N> {
@@ -228,6 +282,7 @@ impl<const N: usize> AbsDiffEq for Matrix<N> {
 mod tests {
     use super::*;
     use approx::{assert_abs_diff_eq, assert_abs_diff_ne};
+    use std::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 
     #[test]
     fn construct_4x4_matrix() {
@@ -597,5 +652,163 @@ mod tests {
         let v = Vector::new(-3.0, 4.0, 5.0);
 
         assert_abs_diff_eq!(m * v, v);
+    }
+
+    #[test]
+    fn scaling_matrix_applied_to_point() {
+        let m = Matrix::scaling(2.0, 3.0, 4.0);
+        let p = Point::new(-4.0, 6.0, 8.0);
+
+        assert_abs_diff_eq!(m * p, Point::new(-8.0, 18.0, 32.0));
+    }
+
+    #[test]
+    fn scaling_matrix_applied_to_vector() {
+        let m = Matrix::scaling(2.0, 3.0, 4.0);
+        let v = Vector::new(-4.0, 6.0, 8.0);
+
+        assert_abs_diff_eq!(m * v, Vector::new(-8.0, 18.0, 32.0));
+    }
+
+    #[test]
+    fn multiply_by_inverse_of_scaling_matrix() {
+        let m = Matrix::scaling(2.0, 3.0, 4.0);
+        let v = Vector::new(-4.0, 6.0, 8.0);
+
+        assert_abs_diff_eq!(m.inverse() * v, Vector::new(-2.0, 2.0, 2.0));
+    }
+
+    #[test]
+    fn reflection_is_scaling_by_negative_value() {
+        let m = Matrix::scaling(-1.0, 1.0, 1.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+
+        assert_abs_diff_eq!(m * p, Point::new(-2.0, 3.0, 4.0));
+    }
+
+    #[test]
+    fn rotation_around_x_axis() {
+        let p = Point::new(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotation_x(FRAC_PI_4);
+        let full_quarter = Matrix::rotation_x(FRAC_PI_2);
+
+        assert_abs_diff_eq!(
+            half_quarter * p,
+            Point::new(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
+        );
+        assert_abs_diff_eq!(full_quarter * p, Point::new(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    fn inverse_rotation_around_x_axis() {
+        let p = Point::new(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotation_x(FRAC_PI_4);
+
+        assert_abs_diff_eq!(
+            half_quarter.inverse() * p,
+            Point::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0)
+        );
+    }
+
+    #[test]
+    fn rotation_around_y_axis() {
+        let p = Point::new(0.0, 0.0, 1.0);
+        let half_quarter = Matrix::rotation_y(FRAC_PI_4);
+        let full_quarter = Matrix::rotation_y(FRAC_PI_2);
+
+        assert_abs_diff_eq!(
+            half_quarter * p,
+            Point::new(2.0_f64.sqrt() / 2.0, 0.0, 2.0_f64.sqrt() / 2.0)
+        );
+        assert_abs_diff_eq!(full_quarter * p, Point::new(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn rotation_around_z_axis() {
+        let p = Point::new(0.0, 1.0, 0.0);
+        let half_quarter = Matrix::rotation_z(FRAC_PI_4);
+        let full_quarter = Matrix::rotation_z(FRAC_PI_2);
+
+        assert_abs_diff_eq!(
+            half_quarter * p,
+            Point::new(-(2.0_f64.sqrt()) / 2.0, 2.0_f64.sqrt() / 2.0, 0.0)
+        );
+        assert_abs_diff_eq!(full_quarter * p, Point::new(-1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn shearing_moves_x_in_proportion_to_y() {
+        let m = Matrix::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+
+        assert_abs_diff_eq!(m * p, Point::new(5.0, 3.0, 4.0));
+    }
+
+    #[test]
+    fn shearing_moves_x_in_proportion_to_z() {
+        let m = Matrix::shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+
+        assert_abs_diff_eq!(m * p, Point::new(6.0, 3.0, 4.0));
+    }
+
+    #[test]
+    fn shearing_moves_y_in_proportion_to_x() {
+        let m = Matrix::shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+
+        assert_abs_diff_eq!(m * p, Point::new(2.0, 5.0, 4.0));
+    }
+
+    #[test]
+    fn shearing_moves_y_in_proportion_to_z() {
+        let m = Matrix::shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+
+        assert_abs_diff_eq!(m * p, Point::new(2.0, 7.0, 4.0));
+    }
+
+    #[test]
+    fn shearing_moves_z_in_proportion_to_x() {
+        let m = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+
+        assert_abs_diff_eq!(m * p, Point::new(2.0, 3.0, 6.0));
+    }
+
+    #[test]
+    fn shearing_moves_z_in_proportion_to_y() {
+        let m = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let p = Point::new(2.0, 3.0, 4.0);
+
+        assert_abs_diff_eq!(m * p, Point::new(2.0, 3.0, 7.0));
+    }
+
+    #[test]
+    fn transformation_applied_in_sequence() {
+        let p = Point::new(1.0, 0.0, 1.0);
+        let a = Matrix::rotation_x(FRAC_PI_2);
+        let b = Matrix::scaling(5.0, 5.0, 5.0);
+        let c = Matrix::translation(10.0, 5.0, 7.0);
+
+        let p2 = a * p;
+        assert_abs_diff_eq!(p2, Point::new(1.0, -1.0, 0.0));
+
+        let p3 = b * p2;
+        assert_abs_diff_eq!(p3, Point::new(5.0, -5.0, 0.0));
+
+        let p4 = c * p3;
+        assert_abs_diff_eq!(p4, Point::new(15.0, 0.0, 7.0));
+    }
+
+    #[test]
+    fn chained_transformations_must_be_applied_in_reverse_order() {
+        let p = Point::new(1.0, 0.0, 1.0);
+        let a = Matrix::rotation_x(FRAC_PI_2);
+        let b = Matrix::scaling(5.0, 5.0, 5.0);
+        let c = Matrix::translation(10.0, 5.0, 7.0);
+
+        let t = c * b * a;
+        assert_abs_diff_eq!(t * p, Point::new(15.0, 0.0, 7.0));
     }
 }
