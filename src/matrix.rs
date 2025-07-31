@@ -139,6 +139,15 @@ impl Matrix<4> {
         }
         m
     }
+
+    pub fn translation(x: f64, y: f64, z: f64) -> Self {
+        Self([
+            [1.0, 0.0, 0.0, x],
+            [0.0, 1.0, 0.0, y],
+            [0.0, 0.0, 1.0, z],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
 }
 
 impl<const N: usize> ops::Index<usize> for Matrix<N> {
@@ -564,5 +573,29 @@ mod tests {
         ]);
 
         assert_abs_diff_eq!(a * b * b.inverse(), a);
+    }
+
+    #[test]
+    fn multiply_by_translation() {
+        let m = Matrix::translation(5.0, -3.0, 2.0);
+        let p = Point::new(-3.0, 4.0, 5.0);
+
+        assert_abs_diff_eq!(m * p, Point::new(2.0, 1.0, 7.0));
+    }
+
+    #[test]
+    fn multiply_by_inverse_translation() {
+        let m = Matrix::translation(5.0, -3.0, 2.0);
+        let p = Point::new(-3.0, 4.0, 5.0);
+
+        assert_abs_diff_eq!(m.inverse() * p, Point::new(-8.0, 7.0, 3.0));
+    }
+
+    #[test]
+    fn translation_does_not_affect_vectors() {
+        let m = Matrix::translation(5.0, -3.0, 2.0);
+        let v = Vector::new(-3.0, 4.0, 5.0);
+
+        assert_abs_diff_eq!(m * v, v);
     }
 }
