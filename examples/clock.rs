@@ -22,19 +22,19 @@ fn main() {
     let tt = Matrix::translation(r, 0.0, 0.0);
 
     for i in 0..12 {
-        // initialize the point to the 12:00 position
+        // initialize the point to the origin
         // remember that it is not centered yet...
         // and the canvas is on x and y axis.  We are rotating around z
-        let p = tt * Point::new(0.0, 0.0, 0.0);
+        let p = Point::new(0.0, 0.0, 0.0);
 
         // rotation will be some multiple of angle_inc
         let tr = Matrix::rotation_z(angle_inc * i as f64);
 
-        //  and translate to the center along with rotating into position
-        // but remember that order matters...
-        let t = tc * tr;
-
-        let h = t * p;
+        // transformation order is:
+        // 1.  move the point to the 12:00 position
+        // 2.  rotate to the correct hour position (rotation is always around the origin)
+        // 3.  translate the origin to the center of the canvas
+        let h = tc * tr * tt * p;
         canvas.write_pixel(h.x as usize, h.y as usize, pixel_color);
     }
 
