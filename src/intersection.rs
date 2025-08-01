@@ -27,13 +27,13 @@ impl AbsDiffEq for Intersection {
 }
 
 pub struct Intersections {
-    pub list: Vec<Intersection>,
+    list: Vec<Intersection>,
 }
 
 impl Intersections {
     pub fn new(mut intersections: Vec<Intersection>) -> Self {
-        intersections.sort_unstable_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
-
+        intersections
+            .sort_unstable_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Equal));
         Intersections {
             list: intersections,
         }
@@ -41,6 +41,10 @@ impl Intersections {
 
     pub fn hit(&self) -> Option<&Intersection> {
         self.list.iter().find(|&intersection| intersection.t > 0.0)
+    }
+
+    pub fn all(&self) -> &[Intersection] {
+        &self.list
     }
 }
 

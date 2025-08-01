@@ -23,18 +23,19 @@ impl Sphere {
     }
 
     pub fn intersect(&self, ray: Ray) -> Intersections {
-        let str: Vector = ray.origin - Point::new(0.0, 0.0, 0.0);
+        let sphere_to_ray: Vector = ray.origin - Point::new(0.0, 0.0, 0.0);
         let a = ray.direction.dot(ray.direction);
-        let b = 2.0 * ray.direction.dot(str);
-        let c = str.dot(str) - 1.0;
+        let b = 2.0 * ray.direction.dot(sphere_to_ray);
+        let c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
 
         let discriminant = b.powi(2) - 4.0 * a * c;
 
         if discriminant < 0.0 {
             Intersections::new(vec![])
         } else {
-            let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
-            let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
+            let sqrt_disc = discriminant.sqrt();
+            let t1 = (-b - sqrt_disc) / (2.0 * a);
+            let t2 = (-b + sqrt_disc) / (2.0 * a);
             Intersections::new(vec![
                 Intersection::new(t1, *self),
                 Intersection::new(t2, *self),
@@ -53,8 +54,8 @@ mod tests {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let i = s.intersect(r);
-        assert_abs_diff_eq!(i.list[0].t, 4.0);
-        assert_abs_diff_eq!(i.list[1].t, 6.0);
+        assert_abs_diff_eq!(i.all()[0].t, 4.0);
+        assert_abs_diff_eq!(i.all()[1].t, 6.0);
     }
 
     #[test]
@@ -62,8 +63,8 @@ mod tests {
         let r = Ray::new(Point::new(0.0, 1.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let i = s.intersect(r);
-        assert_abs_diff_eq!(i.list[0].t, 5.0);
-        assert_abs_diff_eq!(i.list[1].t, 5.0);
+        assert_abs_diff_eq!(i.all()[0].t, 5.0);
+        assert_abs_diff_eq!(i.all()[1].t, 5.0);
     }
 
     #[test]
@@ -72,7 +73,7 @@ mod tests {
         let s = Sphere::default();
         let xs = s.intersect(r);
 
-        assert_eq!(xs.list.len(), 0);
+        assert_eq!(xs.all().len(), 0);
     }
 
     #[test]
@@ -80,8 +81,8 @@ mod tests {
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let i = s.intersect(r);
-        assert_abs_diff_eq!(i.list[0].t, -1.0);
-        assert_abs_diff_eq!(i.list[1].t, 1.0);
+        assert_abs_diff_eq!(i.all()[0].t, -1.0);
+        assert_abs_diff_eq!(i.all()[1].t, 1.0);
     }
 
     #[test]
@@ -89,7 +90,7 @@ mod tests {
         let r = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let i = s.intersect(r);
-        assert_abs_diff_eq!(i.list[0].t, -6.0);
-        assert_abs_diff_eq!(i.list[1].t, -4.0);
+        assert_abs_diff_eq!(i.all()[0].t, -6.0);
+        assert_abs_diff_eq!(i.all()[1].t, -4.0);
     }
 }
