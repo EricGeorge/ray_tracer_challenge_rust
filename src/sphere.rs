@@ -22,9 +22,9 @@ impl Sphere {
 
     pub fn intersect(&self, ray: Ray) -> Vec<f64> {
         let str: Vector = ray.origin - Point::new(0.0, 0.0, 0.0);
-        let a = ray.direction.dot(&ray.direction);
-        let b = 2.0 * ray.direction.dot(&str);
-        let c = str.dot(&str) - 1.0;
+        let a = ray.direction.dot(ray.direction);
+        let b = 2.0 * ray.direction.dot(str);
+        let c = str.dot(str) - 1.0;
 
         let discriminant = b.powi(2) - 4.0 * a * c;
 

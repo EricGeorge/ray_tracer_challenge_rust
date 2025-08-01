@@ -26,11 +26,11 @@ impl Vector {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
     }
 
-    pub fn dot(&self, other: &Self) -> f64 {
+    pub fn dot(&self, other: Self) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
-    pub fn cross(&self, other: &Self) -> Self {
+    pub fn cross(&self, other: Self) -> Self {
         Self::new(
             self.y * other.z - self.z * other.y,
             self.z * other.x - self.x * other.z,
@@ -219,7 +219,7 @@ mod tests {
         let v1 = Vector::new(1.0, 2.0, 3.0);
         let v2 = Vector::new(2.0, 3.0, 4.0);
 
-        assert_abs_diff_eq!(v1.dot(&v2), 20.0);
+        assert_abs_diff_eq!(v1.dot(v2), 20.0);
     }
 
     #[test]
@@ -227,7 +227,7 @@ mod tests {
         let v1 = Vector::new(1.0, 2.0, 3.0);
         let v2 = Vector::new(2.0, 3.0, 4.0);
 
-        assert_abs_diff_eq!(v1.cross(&v2), Vector::new(-1.0, 2.0, -1.0));
-        assert_abs_diff_eq!(v2.cross(&v1), Vector::new(1.0, -2.0, 1.0));
+        assert_abs_diff_eq!(v1.cross(v2), Vector::new(-1.0, 2.0, -1.0));
+        assert_abs_diff_eq!(v2.cross(v1), Vector::new(1.0, -2.0, 1.0));
     }
 }
