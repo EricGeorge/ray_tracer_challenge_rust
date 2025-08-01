@@ -5,7 +5,7 @@
 use super::point::Point;
 use super::vector::Vector;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug)]
 pub struct Ray {
     pub origin: Point,
     pub direction: Vector,
