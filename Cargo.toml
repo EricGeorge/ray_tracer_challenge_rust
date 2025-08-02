@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 approx = "0.5.1"
+indicatif = "0.18.0"
 
 [[example]]
 name = "projectile"
