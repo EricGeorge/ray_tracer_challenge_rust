@@ -5,6 +5,8 @@ use approx::AbsDiffEq;
 use super::point::Point;
 use super::vector::Vector;
 
+pub type Transformation = Matrix<4>;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Matrix<const N: usize>([[f64; N]; N]);
 
