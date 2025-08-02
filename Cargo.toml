@@ -11,3 +11,6 @@ name = "projectile"
 
 [[example]]
 name = "clock"
+
+[[example]]
+name = "circle"
