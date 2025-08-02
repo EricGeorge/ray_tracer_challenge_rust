@@ -100,6 +100,8 @@ impl Canvas {
     pub fn write_ppm(&self, filename: &str) {
         let ppm = self.to_ppm();
 
+        fs::create_dir_all(std::path::Path::new(filename).parent().unwrap())
+            .expect("directory should be created successfully");
         fs::write(filename, ppm).expect("file should be written successfully");
     }
 }

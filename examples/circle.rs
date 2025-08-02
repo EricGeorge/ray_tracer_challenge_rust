@@ -5,7 +5,11 @@ use raytracer::ray::*;
 use raytracer::sphere::*;
 
 fn main() {
-    let canvas_pixels = 100;
+    plot_circle(800, "./images/ppm/circle.ppm");
+}
+
+fn plot_circle(dim: usize, path: &str) {
+    let canvas_pixels = dim;
     let wall_size = 7.0;
     let wall_z = 10.0;
     let pixel_size = wall_size / canvas_pixels as f64;
@@ -14,7 +18,7 @@ fn main() {
 
     let red = Color::new(1.0, 0.0, 0.0);
 
-    let mut canvas = Canvas::empty(canvas_pixels, 100);
+    let mut canvas = Canvas::empty(canvas_pixels, canvas_pixels);
 
     let s = Sphere::default();
 
@@ -33,5 +37,5 @@ fn main() {
             }
         }
     }
-    canvas.write_ppm("./circle.ppm");
+    canvas.write_ppm(path);
 }

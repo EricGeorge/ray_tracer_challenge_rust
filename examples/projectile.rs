@@ -27,24 +27,24 @@ impl Environment {
 
 fn main() {
     let start = Point::new(0.0, 1.0, 0.0);
-    let velocity = Vector::new(1.0, 1.8, 0.0).normalize() * 11.25;
+    let velocity = Vector::new(1.0, 1.8, 0.0).normalize() * 16.0;
     let p = Projectile::new(start, velocity);
 
     let gravity = Vector::new(0.0, -0.1, 0.0);
     let wind = Vector::new(-0.01, 0.0, 0.0);
     let e = Environment::new(gravity, wind);
 
-    plot_trajectory(p, &e, "./trajectory.ppm");
+    plot_trajectory(p, &e, "./images/ppm/trajectory.ppm");
 }
 
 fn plot_trajectory(mut p: Projectile, e: &Environment, path: &str) {
-    let mut canvas = Canvas::empty(900, 550);
+    let mut canvas = Canvas::empty(1800, 1100);
     let pixel_color = Color::new(0.85, 0.35, 0.40);
 
     while p.position.y > 0.0 {
         canvas.write_pixel(
             p.position.x.round() as usize,
-            (550_f64 - p.position.y).round() as usize,
+            (1100_f64 - p.position.y).round() as usize,
             pixel_color,
         );
         p = tick(p, e);

@@ -6,17 +6,20 @@ use raytracer::matrix::*;
 use raytracer::point::*;
 
 fn main() {
-    let dim = 400.0;
+    plot_clock(1000, "./images/ppm/clock.ppm");
+}
+
+fn plot_clock(dim: usize, path: &str) {
     let mut canvas = Canvas::empty(dim as usize, dim as usize);
     let pixel_color = Color::new(1.0, 1.0, 1.0);
 
     let angle_inc = FRAC_PI_6;
 
     // radius of clock is 3/8 of a side dimension
-    let r = 3.0 / 8.0 * dim;
+    let r = 3.0 / 8.0 * dim as f64;
 
     // translation will be to the center
-    let tc = Matrix::translation(dim / 2.0, dim / 2.0, 0.0);
+    let tc = Matrix::translation(dim as f64 / 2.0, dim as f64 / 2.0, 0.0);
 
     // translation to 12:00
     let tt = Matrix::translation(r, 0.0, 0.0);
@@ -38,5 +41,5 @@ fn main() {
         canvas.write_pixel(h.x as usize, h.y as usize, pixel_color);
     }
 
-    canvas.write_ppm("./clock.ppm");
+    canvas.write_ppm(path);
 }
