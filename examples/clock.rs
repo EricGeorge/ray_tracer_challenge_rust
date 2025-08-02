@@ -10,7 +10,7 @@ fn main() {
 }
 
 fn plot_clock(dim: usize, path: &str) {
-    let mut canvas = Canvas::empty(dim as usize, dim as usize);
+    let mut canvas = Canvas::empty(dim, dim);
     let pixel_color = Color::new(1.0, 1.0, 1.0);
 
     let angle_inc = FRAC_PI_6;
