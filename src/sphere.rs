@@ -40,6 +40,10 @@ impl Sphere {
         Self::new(transform, Material::default())
     }
 
+    pub fn new_with_identity_transform(material: Material) -> Self {
+        Self::new(Transformation::identity(), material)
+    }
+
     pub fn set_transform(&mut self, transform: Transformation) {
         self.transform = transform;
         self.inverse_transform = transform.inverse();

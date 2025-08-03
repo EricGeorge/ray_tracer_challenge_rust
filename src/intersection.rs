@@ -56,6 +56,12 @@ impl Intersections {
     pub fn all(&self) -> &[Intersection] {
         &self.list
     }
+
+    pub fn extend(&mut self, other: Intersections) {
+        self.list.extend(other.list);
+        self.list
+            .sort_unstable_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Equal));
+    }
 }
 
 #[cfg(test)]

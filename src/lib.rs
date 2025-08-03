@@ -9,3 +9,4 @@ pub mod ray;
 pub mod sphere;
 pub mod utils;
 pub mod vector;
+pub mod world;
