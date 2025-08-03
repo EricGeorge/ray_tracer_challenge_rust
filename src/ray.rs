@@ -1,12 +1,8 @@
-// use std::ops;
-
-// use approx::AbsDiffEq;
-
 use super::matrix::Transformation;
 use super::point::Point;
 use super::vector::Vector;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Ray {
     pub origin: Point,
     pub direction: Vector,

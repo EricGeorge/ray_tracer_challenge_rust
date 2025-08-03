@@ -22,6 +22,10 @@ impl Vector {
         Self::new(self.x / m, self.y / m, self.z / m)
     }
 
+    pub fn reflect(&self, normal: Self) -> Self {
+        *self - normal * 2.0 * self.dot(normal)
+    }
+
     pub fn magnitude(&self) -> f64 {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
     }
@@ -229,5 +233,20 @@ mod tests {
 
         assert_abs_diff_eq!(v1.cross(v2), Vector::new(-1.0, 2.0, -1.0));
         assert_abs_diff_eq!(v2.cross(v1), Vector::new(1.0, -2.0, 1.0));
+    }
+
+    #[test]
+    fn reflecting_a_vector_approaching_at_45() {
+        let v = Vector::new(1.0, -1.0, 0.0);
+        let n = Vector::new(0.0, 1.0, 0.0);
+
+        assert_abs_diff_eq!(v.reflect(n), Vector::new(1.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn reflecting_a_vector_off_a_slanted_surface() {
+        let v = Vector::new(0.0, -1.0, 0.0);
+        let n = Vector::new(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
+        assert_abs_diff_eq!(v.reflect(n), Vector::new(1.0, 0.0, 0.0));
     }
 }
