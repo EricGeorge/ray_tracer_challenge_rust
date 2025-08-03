@@ -12,9 +12,11 @@ pub struct Point {
 }
 
 impl Point {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
+    pub const fn new(x: f64, y: f64, z: f64) -> Self {
         Self { x, y, z }
     }
+
+    pub const ORIGIN: Point = Point::new(0.0, 0.0, 0.0);
 }
 
 impl ops::Add<Vector> for Point {

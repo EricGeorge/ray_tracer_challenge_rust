@@ -8,12 +8,6 @@ pub struct Canvas {
     pub pixels: Vec<Color>,
 }
 
-const BLACK: Color = Color {
-    red: 0.0,
-    green: 0.0,
-    blue: 0.0,
-};
-
 impl Canvas {
     const PPM_IDENTIFIER: &'static str = "P3";
     const PPM_MAX_COLOR_VALUE: u8 = 255;
@@ -28,7 +22,7 @@ impl Canvas {
     }
 
     pub fn empty(width: usize, height: usize) -> Self {
-        Self::new(width, height, vec![BLACK; width * height])
+        Self::new(width, height, vec![Color::BLACK; width * height])
     }
 
     pub fn write_pixel(&mut self, x: usize, y: usize, color: Color) {

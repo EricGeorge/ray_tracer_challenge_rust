@@ -11,7 +11,7 @@ fn main() {
 
 fn plot_clock(dim: usize, path: &str) {
     let mut canvas = Canvas::empty(dim, dim);
-    let pixel_color = Color::new(1.0, 1.0, 1.0);
+    let pixel_color = Color::WHITE;
 
     let angle_inc = FRAC_PI_6;
 
@@ -28,7 +28,7 @@ fn plot_clock(dim: usize, path: &str) {
         // initialize the point to the origin
         // remember that it is not centered yet...
         // and the canvas is on x and y axis.  We are rotating around z
-        let p = Point::new(0.0, 0.0, 0.0);
+        let p = Point::ORIGIN;
 
         // rotation will be some multiple of angle_inc
         let tr = Matrix::rotation_z(angle_inc * i as f64);

@@ -1,6 +1,6 @@
-// use std::ops;
-
-// use approx::AbsDiffEq;
+// TODO:  Consider moving lighting logic to a separate module
+//        to keep the Sphere struct focused on geometry and transformations.
+//        This would allow for better separation of concerns and make the code more modular.
 
 use super::color::Color;
 use super::intersection::Intersection;
@@ -14,8 +14,9 @@ use super::vector::Vector;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Sphere {
-    pub transform: Transformation,
-    pub material: Material,
+    transform: Transformation,
+    material: Material,
+    inverse_transform: Transformation,
 }
 
 impl Default for Sphere {
@@ -25,28 +26,57 @@ impl Default for Sphere {
 }
 
 impl Sphere {
+    const RADIUS: f64 = 1.0;
+
     pub fn new(transform: Transformation, material: Material) -> Self {
         Self {
             transform,
             material,
+            inverse_transform: transform.inverse(),
         }
     }
 
+    pub fn new_with_default_material(transform: Transformation) -> Self {
+        Self::new(transform, Material::default())
+    }
+
+    pub fn set_transform(&mut self, transform: Transformation) {
+        self.transform = transform;
+        self.inverse_transform = transform.inverse();
+    }
+
+    pub fn transform(&self) -> &Transformation {
+        &self.transform
+    }
+
+    pub fn set_material(&mut self, material: Material) {
+        self.material = material;
+    }
+
+    pub fn material(&self) -> &Material {
+        &self.material
+    }
+
     pub fn intersect(&self, ray: Ray) -> Intersections {
-        let transformed_ray = ray.transform(self.transform.inverse());
-        let sphere_to_ray = transformed_ray.origin - Point::new(0.0, 0.0, 0.0);
+        let transformed_ray = ray.transform(self.inverse_transform);
+        let sphere_to_ray = transformed_ray.origin - Point::ORIGIN;
         let a = transformed_ray.direction.dot(transformed_ray.direction);
         let b = 2.0 * transformed_ray.direction.dot(sphere_to_ray);
-        let c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
+        let c = sphere_to_ray.dot(sphere_to_ray) - Sphere::RADIUS.powi(2);
 
         let discriminant = b.powi(2) - 4.0 * a * c;
 
         if discriminant < 0.0 {
-            Intersections::new(vec![])
+            Intersections::empty()
         } else {
             let sqrt_disc = discriminant.sqrt();
-            let t1 = (-b - sqrt_disc) / (2.0 * a);
-            let t2 = (-b + sqrt_disc) / (2.0 * a);
+            let q = if b < 0.0 {
+                (-b + sqrt_disc) / 2.0
+            } else {
+                (-b - sqrt_disc) / 2.0
+            };
+            let t1 = q / a;
+            let t2 = c / q;
             Intersections::new(vec![
                 Intersection::new(t1, *self),
                 Intersection::new(t2, *self),
@@ -55,9 +85,10 @@ impl Sphere {
     }
 
     pub fn normal_at(&self, point: Point) -> Vector {
-        let object_point = self.transform.inverse() * point;
-        let object_normal = object_point - Point::new(0.0, 0.0, 0.0);
-        let world_normal = self.transform.inverse().transpose() * object_normal;
+        let inverse = self.inverse_transform;
+        let object_point = inverse * point;
+        let object_normal = object_point - Point::ORIGIN;
+        let world_normal = inverse.transpose() * object_normal;
         world_normal.normalize()
     }
 
@@ -73,8 +104,8 @@ impl Sphere {
         let ambient = effective_color * self.material.ambient;
         let light_dot_normal = light_vector.dot(normal);
 
-        let mut diffuse = Color::new(0.0, 0.0, 0.0);
-        let mut specular = Color::new(0.0, 0.0, 0.0);
+        let mut diffuse = Color::BLACK;
+        let mut specular = Color::BLACK;
 
         if light_dot_normal >= 0.0 {
             diffuse = effective_color * self.material.diffuse * light_dot_normal;
@@ -126,7 +157,7 @@ mod tests {
 
     #[test]
     fn ray_originates_inside_sphere() {
-        let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
+        let r = Ray::new(Point::ORIGIN, Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let i = s.intersect(r);
         assert_abs_diff_eq!(i.all()[0].t, -1.0);
@@ -152,10 +183,7 @@ mod tests {
     #[test]
     fn intersecting_a_scaled_sphere_with_a_ray() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Sphere {
-            transform: Matrix::scaling(2.0, 2.0, 2.0),
-            ..Default::default()
-        };
+        let s = Sphere::new_with_default_material(Transformation::scaling(2.0, 2.0, 2.0));
         let i = s.intersect(r);
 
         assert_abs_diff_eq!(i.all()[0].t, 3.0);
@@ -165,10 +193,8 @@ mod tests {
     #[test]
     fn intersecting_translated_sphere_with_ray() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Sphere {
-            transform: Matrix::translation(5.0, 0.0, 0.0),
-            ..Default::default()
-        };
+        let s = Sphere::new_with_default_material(Transformation::translation(5.0, 0.0, 0.0));
+
         let i = s.intersect(r);
 
         assert_eq!(i.all().len(), 0);
@@ -226,10 +252,8 @@ mod tests {
     #[test]
     #[allow(clippy::approx_constant)]
     fn normal_on_translated_sphere() {
-        let s = Sphere {
-            transform: Matrix::translation(0.0, 1.0, 0.0),
-            ..Default::default()
-        };
+        let s = Sphere::new_with_default_material(Transformation::translation(0.0, 1.0, 0.0));
+
         let n = s.normal_at(Point::new(0.0, 1.70711, -0.70711));
         let expected = Vector::new(0.0, 0.70711, -0.70711);
         assert_abs_diff_eq!(n, expected);
@@ -237,11 +261,10 @@ mod tests {
 
     #[test]
     fn normal_on_transformed_sphere() {
-        let s = Sphere {
-            transform: Matrix::scaling(1.0, 0.5, 1.0)
-                * Matrix::rotation_z(std::f64::consts::PI / 5.0),
-            ..Default::default()
-        };
+        let s = Sphere::new_with_default_material(
+            Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotation_z(std::f64::consts::PI / 5.0),
+        );
+
         let n = s.normal_at(Point::new(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0));
 
         let expected = Vector::new(0.0, 0.97014, 0.24254);
@@ -266,10 +289,10 @@ mod tests {
 
     #[test]
     fn lighting_with_the_eye_between_light_and_surface() {
-        let position = Point::new(0.0, 0.0, 0.0);
+        let position = Point::ORIGIN;
         let eye = Vector::new(0.0, 0.0, -1.0);
         let normal = Vector::new(0.0, 0.0, -1.0);
-        let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::WHITE);
         let s = Sphere::default();
         let color = s.lighting(position, light, eye, normal);
         assert_eq!(color, Color::new(1.9, 1.9, 1.9));
@@ -277,21 +300,21 @@ mod tests {
 
     #[test]
     fn lighting_with_the_eye_between_light_and_surface_at_an_angle() {
-        let position = Point::new(0.0, 0.0, 0.0);
+        let position = Point::ORIGIN;
         let eye = Vector::new(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
         let normal = Vector::new(0.0, 0.0, -1.0);
-        let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::WHITE);
         let s = Sphere::default();
         let color = s.lighting(position, light, eye, normal);
-        assert_eq!(color, Color::new(1.0, 1.0, 1.0));
+        assert_eq!(color, Color::WHITE);
     }
 
     #[test]
     fn lighting_with_the_eye_opposite_surface_and_light() {
-        let position = Point::new(0.0, 0.0, 0.0);
+        let position = Point::ORIGIN;
         let eye = Vector::new(0.0, 0.0, -1.0);
         let normal = Vector::new(0.0, 0.0, -1.0);
-        let light = PointLight::new(Point::new(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let light = PointLight::new(Point::new(0.0, 10.0, -10.0), Color::WHITE);
         let s = Sphere::default();
         let color = s.lighting(position, light, eye, normal);
         assert_abs_diff_eq!(color, Color::new(0.7364, 0.7364, 0.7364));
@@ -299,10 +322,10 @@ mod tests {
 
     #[test]
     fn lighting_with_the_eye_in_the_path_of_the_reflection_vector() {
-        let position = Point::new(0.0, 0.0, 0.0);
+        let position = Point::ORIGIN;
         let eye = Vector::new(0.0, -2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
         let normal = Vector::new(0.0, 0.0, -1.0);
-        let light = PointLight::new(Point::new(0.0, 10.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let light = PointLight::new(Point::new(0.0, 10.0, -10.0), Color::WHITE);
         let s = Sphere::default();
         let color = s.lighting(position, light, eye, normal);
         assert_abs_diff_eq!(color, Color::new(1.6364, 1.6364, 1.6364));
@@ -310,10 +333,10 @@ mod tests {
 
     #[test]
     fn lighting_with_the_light_behind_the_surface() {
-        let position = Point::new(0.0, 0.0, 0.0);
+        let position = Point::ORIGIN;
         let eye = Vector::new(0.0, 0.0, -1.0);
         let normal = Vector::new(0.0, 0.0, -1.0);
-        let light = PointLight::new(Point::new(0.0, 0.0, 10.0), Color::new(1.0, 1.0, 1.0));
+        let light = PointLight::new(Point::new(0.0, 0.0, 10.0), Color::WHITE);
         let s = Sphere::default();
         let color = s.lighting(position, light, eye, normal);
         assert_eq!(color, Color::new(0.1, 0.1, 0.1));

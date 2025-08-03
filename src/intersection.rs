@@ -1,3 +1,9 @@
+//TODO:  Consider making the Sphere in Interscection a reference
+//       to avoid cloning the Sphere in every intersection.
+//       This would require a change in the Sphere struct to hold a reference
+//       to the Sphere instead of owning it, which may complicate ownership and lifetimes.
+//       Alternatively, we could use Arc or Rc to share ownership of the Sphere.
+
 use approx::AbsDiffEq;
 
 use super::sphere::Sphere;
@@ -37,6 +43,10 @@ impl Intersections {
         Intersections {
             list: intersections,
         }
+    }
+
+    pub fn empty() -> Self {
+        Self::new(Vec::new())
     }
 
     pub fn hit(&self) -> Option<&Intersection> {
