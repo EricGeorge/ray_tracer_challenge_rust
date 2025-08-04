@@ -61,6 +61,10 @@ impl Sphere {
         &self.material
     }
 
+    pub fn material_mut(&mut self) -> &mut Material {
+        &mut self.material
+    }
+
     pub fn intersect(&self, ray: Ray) -> Intersections {
         let transformed_ray = ray.transform(self.inverse_transform);
         let sphere_to_ray = transformed_ray.origin - Point::ORIGIN;

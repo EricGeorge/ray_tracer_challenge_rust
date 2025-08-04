@@ -1,3 +1,5 @@
+// TODO - Mutating objects in the world is clunky - revisit and make more rustic
+
 use super::color::Color;
 use super::intersection::Computations;
 use super::intersection::Intersections;
@@ -144,25 +146,14 @@ mod tests {
 
     #[test]
     fn color_when_intersection_behind_ray() {
-        let world = World::default();
-        let mut outer = world.objects[0];
-        let mut inner = world.objects[1];
-
-        let outer_material = outer.material();
-        outer.set_material(Material {
-            ambient: 1.0,
-            ..*outer_material
-        });
-
-        let inner_material = inner.material();
-        inner.set_material(Material {
-            ambient: 1.0,
-            ..*inner_material
-        });
+        let mut world = World::default();
+        for obj in &mut world.objects {
+            obj.material_mut().ambient = 1.0;
+        }
 
         let ray = Ray::new(Point::new(0.0, 0.0, 0.75), Vector::new(0.0, 0.0, -1.0));
         let color = world.color_at(ray);
 
-        assert_abs_diff_eq!(color, inner.material().color);
+        assert_abs_diff_eq!(color, world.objects[1].material().color);
     }
 }
