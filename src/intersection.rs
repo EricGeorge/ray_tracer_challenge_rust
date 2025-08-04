@@ -6,7 +6,10 @@
 
 use approx::AbsDiffEq;
 
+use super::point::Point;
+use super::ray::Ray;
 use super::sphere::Sphere;
+use super::vector::Vector;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Intersection {
@@ -14,9 +17,37 @@ pub struct Intersection {
     pub s: Sphere,
 }
 
+pub struct Computations {
+    pub object: Sphere,
+    pub point: Point,
+    pub eye_vector: Vector,
+    pub normal_vector: Vector,
+    pub inside: bool,
+}
+
 impl Intersection {
     pub fn new(t: f64, s: Sphere) -> Self {
         Self { t, s }
+    }
+
+    pub fn prepare_computations(&self, ray: Ray) -> Computations {
+        let point = ray.position(self.t);
+        let eye_vector = -ray.direction;
+        let normal_vector = self.s.normal_at(point);
+        let inside = normal_vector.dot(eye_vector) < 0.0;
+        let normal_vector = if inside {
+            -normal_vector
+        } else {
+            normal_vector
+        };
+
+        Computations {
+            object: self.s,
+            point,
+            eye_vector,
+            normal_vector,
+            inside,
+        }
     }
 }
 
@@ -47,6 +78,10 @@ impl Intersections {
 
     pub fn empty() -> Self {
         Self::new(Vec::new())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.list.is_empty()
     }
 
     pub fn hit(&self) -> Option<&Intersection> {
@@ -133,5 +168,41 @@ mod tests {
         let xs = Intersections::new(vec![i1, i2, i3, i4]);
 
         assert_eq!(xs.hit(), Some(&i4));
+    }
+
+    #[test]
+    fn prepare_computations() {
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let i = Intersection::new(4.0, s);
+        let comps = i.prepare_computations(r);
+
+        assert_eq!(comps.object, s);
+        assert_eq!(comps.point, Point::new(0.0, 0.0, -1.0));
+        assert_eq!(comps.eye_vector, Vector::new(0.0, 0.0, -1.0));
+        assert_eq!(comps.normal_vector, Vector::new(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn prepare_computations_inside() {
+        let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let i = Intersection::new(4.0, s);
+        let comps = i.prepare_computations(r);
+
+        assert!(!comps.inside);
+    }
+
+    #[test]
+    fn prepare_computations_inside_object() {
+        let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
+        let s = Sphere::default();
+        let i = Intersection::new(1.0, s);
+        let comps = i.prepare_computations(r);
+
+        assert_eq!(comps.point, Point::new(0.0, 0.0, 1.0));
+        assert_eq!(comps.eye_vector, Vector::new(0.0, 0.0, -1.0));
+        assert_eq!(comps.normal_vector, Vector::new(0.0, 0.0, -1.0));
+        assert!(comps.inside);
     }
 }

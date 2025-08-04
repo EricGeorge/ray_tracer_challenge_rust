@@ -1,4 +1,5 @@
 use super::color::Color;
+use super::intersection::Computations;
 use super::intersection::Intersections;
 use super::material::Material;
 use super::matrix::Transformation;
@@ -32,6 +33,32 @@ impl World {
         }
         intersections
     }
+
+    fn shade_hit(&self, comps: Computations) -> Color {
+        if self.light.is_none() {
+            return Color::BLACK;
+        }
+
+        comps.object.lighting(
+            comps.point,
+            self.light.expect("World must have a light source"),
+            comps.eye_vector,
+            comps.normal_vector,
+        )
+    }
+
+    pub fn color_at(&self, ray: Ray) -> Color {
+        let intersections = self.intersections(ray);
+        let hit = intersections.hit();
+
+        match hit {
+            Some(hit) => {
+                let comps = hit.prepare_computations(ray);
+                self.shade_hit(comps)
+            }
+            None => Color::BLACK,
+        }
+    }
 }
 
 impl Default for World {
@@ -54,6 +81,7 @@ impl Default for World {
 mod tests {
     use super::*;
     use crate::vector::Vector;
+    use approx::assert_abs_diff_eq;
 
     #[test]
     fn test_world_creation() {
@@ -94,5 +122,47 @@ mod tests {
         assert_eq!(intersections.all()[1].t, 4.5);
         assert_eq!(intersections.all()[2].t, 5.5);
         assert_eq!(intersections.all()[3].t, 6.0);
+    }
+
+    #[test]
+    fn color_at_no_intersections() {
+        let world = World::default();
+        let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 1.0, 0.0));
+        let color = world.color_at(ray);
+
+        assert_eq!(color, Color::BLACK);
+    }
+
+    #[test]
+    fn color_at_with_intersections() {
+        let world = World::default();
+        let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
+        let color = world.color_at(ray);
+
+        assert_abs_diff_eq!(color, Color::new(0.38066, 0.47583, 0.2855));
+    }
+
+    #[test]
+    fn color_when_intersection_behind_ray() {
+        let world = World::default();
+        let mut outer = world.objects[0];
+        let mut inner = world.objects[1];
+
+        let outer_material = outer.material();
+        outer.set_material(Material {
+            ambient: 1.0,
+            ..*outer_material
+        });
+
+        let inner_material = inner.material();
+        inner.set_material(Material {
+            ambient: 1.0,
+            ..*inner_material
+        });
+
+        let ray = Ray::new(Point::new(0.0, 0.0, 0.75), Vector::new(0.0, 0.0, -1.0));
+        let color = world.color_at(ray);
+
+        assert_abs_diff_eq!(color, inner.material().color);
     }
 }
