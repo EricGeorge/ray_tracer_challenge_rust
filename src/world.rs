@@ -13,18 +13,18 @@ use super::sphere::Sphere;
 #[derive(Debug)]
 pub struct World {
     pub objects: Vec<Sphere>,
-    pub light: Option<PointLight>,
+    pub light: PointLight,
 }
 
 impl World {
-    pub fn new(objects: Vec<Sphere>, light: Option<PointLight>) -> Self {
+    pub fn new(objects: Vec<Sphere>, light: PointLight) -> Self {
         Self { objects, light }
     }
 
     pub fn empty() -> Self {
         Self {
             objects: Vec::new(),
-            light: None,
+            light: PointLight::new(Point::ORIGIN, Color::BLACK),
         }
     }
 
@@ -37,13 +37,9 @@ impl World {
     }
 
     fn shade_hit(&self, comps: Computations) -> Color {
-        if self.light.is_none() {
-            return Color::BLACK;
-        }
-
         comps.object.lighting(
             comps.point,
-            self.light.expect("World must have a light source"),
+            self.light,
             comps.eye_vector,
             comps.normal_vector,
         )
@@ -75,7 +71,7 @@ impl Default for World {
         let sphere1 = Sphere::new_with_identity_transform(material);
         let sphere2 = Sphere::new_with_default_material(Transformation::scaling(0.5, 0.5, 0.5));
         let objects = vec![sphere1, sphere2];
-        Self::new(objects, Some(light))
+        Self::new(objects, light)
     }
 }
 
@@ -89,7 +85,7 @@ mod tests {
     fn test_world_creation() {
         let world = World::empty();
         assert_eq!(world.objects.len(), 0);
-        assert!(world.light.is_none());
+        assert_eq!(world.light.intensity, Color::BLACK);
     }
 
     #[test]
@@ -107,8 +103,7 @@ mod tests {
         let sphere2 = Sphere::new_with_default_material(Transformation::scaling(0.5, 0.5, 0.5));
 
         assert_eq!(world.objects.len(), 2);
-        assert!(world.light.is_some());
-        assert_eq!(world.light, Some(light));
+        assert_eq!(world.light, light);
         assert_eq!(world.objects[0], sphere1);
         assert_eq!(world.objects[1], sphere2);
     }
