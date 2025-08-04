@@ -147,9 +147,8 @@ mod tests {
     #[test]
     fn color_when_intersection_behind_ray() {
         let mut world = World::default();
-        for obj in &mut world.objects {
-            obj.material_mut().ambient = 1.0;
-        }
+        world.objects[0].material_mut().ambient = 1.0;
+        world.objects[1].material_mut().ambient = 1.0;
 
         let ray = Ray::new(Point::new(0.0, 0.0, 0.75), Vector::new(0.0, 0.0, -1.0));
         let color = world.color_at(ray);
