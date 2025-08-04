@@ -53,10 +53,6 @@ impl Sphere {
         &self.transform
     }
 
-    pub fn set_material(&mut self, material: Material) {
-        self.material = material;
-    }
-
     pub fn material(&self) -> &Material {
         &self.material
     }
