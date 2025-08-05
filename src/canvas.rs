@@ -1,6 +1,5 @@
-use std::fs;
-
 use super::color::Color;
+use std::fs;
 
 pub struct Canvas {
     pub width: usize,

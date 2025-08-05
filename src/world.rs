@@ -28,7 +28,7 @@ impl World {
         }
     }
 
-    pub fn intersections(&self, ray: Ray) -> Intersections {
+    pub fn intersections<'a>(&'a self, ray: Ray) -> Intersections<'a> {
         let mut intersections = Intersections::empty();
         for object in &self.objects {
             intersections.extend(object.intersect(ray));

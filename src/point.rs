@@ -1,8 +1,6 @@
-use std::ops;
-
-use approx::AbsDiffEq;
-
 use super::vector::Vector;
+use approx::AbsDiffEq;
+use std::ops;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point {

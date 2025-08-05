@@ -1,36 +1,29 @@
-//TODO:  Consider making the Sphere in Interscection a reference
-//       to avoid cloning the Sphere in every intersection.
-//       This would require a change in the Sphere struct to hold a reference
-//       to the Sphere instead of owning it, which may complicate ownership and lifetimes.
-//       Alternatively, we could use Arc or Rc to share ownership of the Sphere.
-
-use approx::AbsDiffEq;
-
 use super::point::Point;
 use super::ray::Ray;
 use super::sphere::Sphere;
 use super::vector::Vector;
+use approx::AbsDiffEq;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Intersection {
+#[derive(Debug, PartialEq)]
+pub struct Intersection<'a> {
     pub t: f64,
-    pub s: Sphere,
+    pub s: &'a Sphere,
 }
 
-pub struct Computations {
-    pub object: Sphere,
+pub struct Computations<'a> {
+    pub object: &'a Sphere,
     pub point: Point,
     pub eye_vector: Vector,
     pub normal_vector: Vector,
     pub inside: bool,
 }
 
-impl Intersection {
-    pub fn new(t: f64, s: Sphere) -> Self {
+impl<'a> Intersection<'a> {
+    pub fn new(t: f64, s: &'a Sphere) -> Self {
         Self { t, s }
     }
 
-    pub fn prepare_computations(&self, ray: Ray) -> Computations {
+    pub fn prepare_computations(&'a self, ray: Ray) -> Computations<'a> {
         let point = ray.position(self.t);
         let eye_vector = -ray.direction;
         let normal_vector = self.s.normal_at(point);
@@ -51,7 +44,7 @@ impl Intersection {
     }
 }
 
-impl AbsDiffEq for Intersection {
+impl<'a> AbsDiffEq for Intersection<'a> {
     type Epsilon = f64;
 
     fn default_epsilon() -> Self::Epsilon {
@@ -63,12 +56,12 @@ impl AbsDiffEq for Intersection {
     }
 }
 
-pub struct Intersections {
-    list: Vec<Intersection>,
+pub struct Intersections<'a> {
+    list: Vec<Intersection<'a>>,
 }
 
-impl Intersections {
-    pub fn new(mut intersections: Vec<Intersection>) -> Self {
+impl<'a> Intersections<'a> {
+    pub fn new(mut intersections: Vec<Intersection<'a>>) -> Self {
         intersections
             .sort_unstable_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Equal));
         Intersections {
@@ -84,7 +77,7 @@ impl Intersections {
         self.list.is_empty()
     }
 
-    pub fn hit(&self) -> Option<&Intersection> {
+    pub fn hit(&self) -> Option<&Intersection<'a>> {
         self.list.iter().find(|&intersection| intersection.t > 0.0)
     }
 
@@ -92,7 +85,7 @@ impl Intersections {
         &self.list
     }
 
-    pub fn extend(&mut self, other: Intersections) {
+    pub fn extend(&mut self, other: Intersections<'a>) {
         self.list.extend(other.list);
         self.list
             .sort_unstable_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Equal));
@@ -110,10 +103,10 @@ mod tests {
     #[test]
     fn create_intersection() {
         let s = Sphere::default();
-        let i = Intersection::new(3.5, s);
+        let i = Intersection::new(3.5, &s);
 
         assert_abs_diff_eq!(i.t, 3.5);
-        assert_eq!(i.s, s);
+        assert_eq!(i.s, &s);
     }
 
     #[test]
@@ -121,36 +114,40 @@ mod tests {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::default();
         let i = s.intersect(r);
-        assert_eq!(i.list[0].s, s);
-        assert_eq!(i.list[1].s, s);
+        assert_eq!(i.list[0].s, &s);
+        assert_eq!(i.list[1].s, &s);
     }
 
     #[test]
     fn hit_all_positive() {
         let s = Sphere::default();
-        let i1 = Intersection::new(1.0, s);
-        let i2 = Intersection::new(2.0, s);
+        let i1 = Intersection::new(1.0, &s);
+        let i2 = Intersection::new(2.0, &s);
 
         let xs = Intersections::new(vec![i1, i2]);
-        assert_eq!(xs.hit(), Some(&i1));
+        let hit = xs.hit().unwrap();
+        assert_eq!(hit.t, 1.0);
+        assert_eq!(hit.s, &s);
     }
 
     #[test]
     fn hit_some_negative() {
         let s = Sphere::default();
-        let i1 = Intersection::new(-1.0, s);
-        let i2 = Intersection::new(1.0, s);
+        let i1 = Intersection::new(-1.0, &s);
+        let i2 = Intersection::new(1.0, &s);
 
         let xs = Intersections::new(vec![i1, i2]);
 
-        assert_eq!(xs.hit(), Some(&i2));
+        let hit = xs.hit().unwrap();
+        assert_eq!(hit.t, 1.0);
+        assert_eq!(hit.s, &s);
     }
 
     #[test]
     fn hit_all_negative() {
         let s = Sphere::default();
-        let i1 = Intersection::new(-2.0, s);
-        let i2 = Intersection::new(-1.0, s);
+        let i1 = Intersection::new(-2.0, &s);
+        let i2 = Intersection::new(-1.0, &s);
 
         let xs = Intersections::new(vec![i1, i2]);
 
@@ -160,24 +157,27 @@ mod tests {
     #[test]
     fn hit_lowest_nonnegative() {
         let s = Sphere::default();
-        let i1 = Intersection::new(5.0, s);
-        let i2 = Intersection::new(7.0, s);
-        let i3 = Intersection::new(-3.0, s);
-        let i4 = Intersection::new(2.0, s);
+        let i1 = Intersection::new(5.0, &s);
+        let i2 = Intersection::new(7.0, &s);
+        let i3 = Intersection::new(-3.0, &s);
+        let i4 = Intersection::new(2.0, &s);
+        let i4_t = i4.t;
 
         let xs = Intersections::new(vec![i1, i2, i3, i4]);
 
-        assert_eq!(xs.hit(), Some(&i4));
+        let hit = xs.hit().unwrap();
+
+        assert_eq!(hit.t, i4_t);
     }
 
     #[test]
     fn prepare_computations() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::default();
-        let i = Intersection::new(4.0, s);
+        let i = Intersection::new(4.0, &s);
         let comps = i.prepare_computations(r);
 
-        assert_eq!(comps.object, s);
+        assert_eq!(comps.object, &s);
         assert_eq!(comps.point, Point::new(0.0, 0.0, -1.0));
         assert_eq!(comps.eye_vector, Vector::new(0.0, 0.0, -1.0));
         assert_eq!(comps.normal_vector, Vector::new(0.0, 0.0, -1.0));
@@ -187,7 +187,7 @@ mod tests {
     fn prepare_computations_inside() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::default();
-        let i = Intersection::new(4.0, s);
+        let i = Intersection::new(4.0, &s);
         let comps = i.prepare_computations(r);
 
         assert!(!comps.inside);
@@ -197,7 +197,7 @@ mod tests {
     fn prepare_computations_inside_object() {
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
         let s = Sphere::default();
-        let i = Intersection::new(1.0, s);
+        let i = Intersection::new(1.0, &s);
         let comps = i.prepare_computations(r);
 
         assert_eq!(comps.point, Point::new(0.0, 0.0, 1.0));

@@ -12,7 +12,7 @@ use super::point_light::PointLight;
 use super::ray::Ray;
 use super::vector::Vector;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Sphere {
     transform: Transformation,
     material: Material,
@@ -61,7 +61,7 @@ impl Sphere {
         &mut self.material
     }
 
-    pub fn intersect(&self, ray: Ray) -> Intersections {
+    pub fn intersect<'a>(&'a self, ray: Ray) -> Intersections<'a> {
         let transformed_ray = ray.transform(self.inverse_transform);
         let sphere_to_ray = transformed_ray.origin - Point::ORIGIN;
         let a = transformed_ray.direction.dot(transformed_ray.direction);
@@ -82,8 +82,8 @@ impl Sphere {
             let t1 = q / a;
             let t2 = c / q;
             Intersections::new(vec![
-                Intersection::new(t1, *self),
-                Intersection::new(t2, *self),
+                Intersection::new(t1, self),
+                Intersection::new(t2, self),
             ])
         }
     }
