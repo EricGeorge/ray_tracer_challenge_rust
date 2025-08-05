@@ -2,10 +2,11 @@ use super::canvas::Canvas;
 use super::matrix::Matrix;
 use super::point::Point;
 use super::ray::Ray;
+use super::utils::create_progress_bar;
 use super::world::World;
 
 #[derive(Debug)]
-struct Camera {
+pub struct Camera {
     pub hsize: usize,
     pub vsize: usize,
     pub field_of_view: f64,
@@ -59,11 +60,14 @@ impl Camera {
     pub fn render(&self, world: &World) -> Canvas {
         let mut image = Canvas::empty(self.hsize, self.vsize);
 
+        let pb = create_progress_bar((self.hsize * self.vsize) as u64);
+
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y);
                 let color = world.color_at(ray);
                 image.write_pixel(x, y, color);
+                pb.inc(1);
             }
         }
 
