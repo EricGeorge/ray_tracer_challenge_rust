@@ -5,6 +5,7 @@ use raytracer::matrix::*;
 use raytracer::point::*;
 use raytracer::point_light::*;
 use raytracer::sphere::*;
+use raytracer::utils::create_progress_bar;
 use raytracer::vector::*;
 use raytracer::world::*;
 
@@ -13,6 +14,9 @@ fn main() {
 }
 
 fn render_scene(hsize: usize, vsize: usize, path: &str) {
+    // progress bar setup
+    let pb = create_progress_bar((hsize * vsize) as u64);
+
     // world
     let mut world = World::empty();
 
@@ -95,6 +99,8 @@ fn render_scene(hsize: usize, vsize: usize, path: &str) {
     let left_sphere = Sphere::new(left_sphere_transform, left_sphere_material);
     world.objects.push(left_sphere);
 
-    let canvas = camera.render(&world);
+    let canvas = camera.render(&world, || {
+        pb.inc(1);
+    });
     canvas.write_ppm(path);
 }

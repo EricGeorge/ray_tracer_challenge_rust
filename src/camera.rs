@@ -2,7 +2,6 @@ use super::canvas::Canvas;
 use super::matrix::Matrix;
 use super::point::Point;
 use super::ray::Ray;
-use super::utils::create_progress_bar;
 use super::world::World;
 
 #[derive(Debug)]
@@ -57,17 +56,19 @@ impl Camera {
         Ray::new(origin, direction)
     }
 
-    pub fn render(&self, world: &World) -> Canvas {
+    pub fn render<F>(&self, world: &World, mut on_progress: F) -> Canvas
+    where
+        F: FnMut(),
+    {
         let mut image = Canvas::empty(self.hsize, self.vsize);
-
-        let pb = create_progress_bar((self.hsize * self.vsize) as u64);
 
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y);
                 let color = world.color_at(ray);
                 image.write_pixel(x, y, color);
-                pb.inc(1);
+
+                on_progress()
             }
         }
 
@@ -145,7 +146,7 @@ mod tests {
             Point::ORIGIN,
             Vector::new(0.0, 1.0, 0.0),
         );
-        let image = camera.render(&w);
+        let image = camera.render(&w, || {});
         assert_abs_diff_eq!(image.pixel_at(5, 5), Color::new(0.38066, 0.47583, 0.2855));
     }
 }
