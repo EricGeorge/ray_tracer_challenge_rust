@@ -68,8 +68,8 @@ impl Default for World {
             specular: 0.2,
             ..Default::default()
         };
-        let sphere1 = Sphere::new_with_identity_transform(material);
-        let sphere2 = Sphere::new_with_default_material(Transformation::scaling(0.5, 0.5, 0.5));
+        let sphere1 = Sphere::new().with_material(material);
+        let sphere2 = Sphere::new().with_transform(Transformation::scaling(0.5, 0.5, 0.5));
         let objects = vec![sphere1, sphere2];
         Self::new(objects, light)
     }
@@ -99,8 +99,8 @@ mod tests {
             specular: 0.2,
             ..Default::default()
         };
-        let sphere1 = Sphere::new_with_identity_transform(material);
-        let sphere2 = Sphere::new_with_default_material(Transformation::scaling(0.5, 0.5, 0.5));
+        let sphere1 = Sphere::new().with_material(material);
+        let sphere2 = Sphere::new().with_transform(Transformation::scaling(0.5, 0.5, 0.5));
 
         assert_eq!(world.objects.len(), 2);
         assert_eq!(world.light, light);

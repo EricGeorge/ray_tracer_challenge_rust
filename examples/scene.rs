@@ -40,7 +40,9 @@ fn render_scene(hsize: usize, vsize: usize, path: &str) {
     };
 
     let floor_transform = Transformation::scaling(10.0, 0.01, 10.0);
-    let floor = Sphere::new(floor_transform, floor_material);
+    let floor = Sphere::new()
+        .with_material(floor_material)
+        .with_transform(floor_transform);
     world.objects.push(floor);
 
     // left wall
@@ -49,7 +51,9 @@ fn render_scene(hsize: usize, vsize: usize, path: &str) {
         * Transformation::rotation_z(std::f64::consts::PI / 2.0)
         * Transformation::scaling(10.0, 0.01, 10.0);
 
-    let left_wall = Sphere::new(left_wall_transform, floor_material);
+    let left_wall = Sphere::new()
+        .with_material(floor_material)
+        .with_transform(left_wall_transform);
     world.objects.push(left_wall);
 
     // right wall
@@ -58,7 +62,9 @@ fn render_scene(hsize: usize, vsize: usize, path: &str) {
         * Transformation::rotation_x(std::f64::consts::PI / 2.0)
         * Transformation::scaling(10.0, 0.01, 10.0);
 
-    let right_wall = Sphere::new(right_wall_transform, floor_material);
+    let right_wall = Sphere::new()
+        .with_material(floor_material)
+        .with_transform(right_wall_transform);
     world.objects.push(right_wall);
 
     // middle sphere
@@ -70,7 +76,9 @@ fn render_scene(hsize: usize, vsize: usize, path: &str) {
     };
 
     let middle_sphere_transform = Transformation::translation(-0.5, 1.0, 0.5);
-    let middle_sphere = Sphere::new(middle_sphere_transform, middle_sphere_material);
+    let middle_sphere = Sphere::new()
+        .with_material(middle_sphere_material)
+        .with_transform(middle_sphere_transform);
     world.objects.push(middle_sphere);
 
     // right sphere
@@ -83,7 +91,9 @@ fn render_scene(hsize: usize, vsize: usize, path: &str) {
 
     let right_sphere_transform =
         Transformation::translation(1.5, 0.5, -0.5) * Transformation::scaling(0.5, 0.5, 0.5);
-    let right_sphere = Sphere::new(right_sphere_transform, right_sphere_material);
+    let right_sphere = Sphere::new()
+        .with_material(right_sphere_material)
+        .with_transform(right_sphere_transform);
     world.objects.push(right_sphere);
 
     // left sphere
@@ -96,7 +106,9 @@ fn render_scene(hsize: usize, vsize: usize, path: &str) {
 
     let left_sphere_transform =
         Transformation::translation(-1.5, 0.33, -0.75) * Transformation::scaling(0.33, 0.33, 0.33);
-    let left_sphere = Sphere::new(left_sphere_transform, left_sphere_material);
+    let left_sphere = Sphere::new()
+        .with_material(left_sphere_material)
+        .with_transform(left_sphere_transform);
     world.objects.push(left_sphere);
 
     let canvas = camera.render(&world, || {

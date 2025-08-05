@@ -21,40 +21,38 @@ pub struct Sphere {
 
 impl Default for Sphere {
     fn default() -> Self {
-        Self::new(Transformation::identity(), Material::default())
+        Self {
+            transform: Transformation::identity(),
+            material: Material::default(),
+            inverse_transform: Transformation::identity(),
+        }
     }
 }
 
 impl Sphere {
     const RADIUS: f64 = 1.0;
 
-    pub fn new(transform: Transformation, material: Material) -> Self {
-        Self {
-            transform,
-            material,
-            inverse_transform: transform.inverse(),
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    pub fn new_with_default_material(transform: Transformation) -> Self {
-        Self::new(transform, Material::default())
-    }
-
-    pub fn new_with_identity_transform(material: Material) -> Self {
-        Self::new(Transformation::identity(), material)
-    }
-
-    pub fn set_transform(&mut self, transform: Transformation) {
+    pub fn with_transform(mut self, transform: Transformation) -> Self {
         self.transform = transform;
         self.inverse_transform = transform.inverse();
+        self
     }
 
-    pub fn transform(&self) -> &Transformation {
-        &self.transform
+    pub fn with_material(mut self, material: Material) -> Self {
+        self.material = material;
+        self
     }
 
     pub fn material(&self) -> &Material {
         &self.material
+    }
+
+    pub fn transform(&self) -> &Transformation {
+        &self.transform
     }
 
     pub fn material_mut(&mut self) -> &mut Material {
@@ -187,7 +185,7 @@ mod tests {
     #[test]
     fn intersecting_a_scaled_sphere_with_a_ray() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Sphere::new_with_default_material(Transformation::scaling(2.0, 2.0, 2.0));
+        let s = Sphere::new().with_transform(Transformation::scaling(2.0, 2.0, 2.0));
         let i = s.intersect(r);
 
         assert_abs_diff_eq!(i.all()[0].t, 3.0);
@@ -197,7 +195,7 @@ mod tests {
     #[test]
     fn intersecting_translated_sphere_with_ray() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Sphere::new_with_default_material(Transformation::translation(5.0, 0.0, 0.0));
+        let s = Sphere::new().with_transform(Transformation::translation(5.0, 0.0, 0.0));
 
         let i = s.intersect(r);
 
@@ -256,7 +254,7 @@ mod tests {
     #[test]
     #[allow(clippy::approx_constant)]
     fn normal_on_translated_sphere() {
-        let s = Sphere::new_with_default_material(Transformation::translation(0.0, 1.0, 0.0));
+        let s = Sphere::new().with_transform(Transformation::translation(0.0, 1.0, 0.0));
 
         let n = s.normal_at(Point::new(0.0, 1.70711, -0.70711));
         let expected = Vector::new(0.0, 0.70711, -0.70711);
@@ -265,7 +263,7 @@ mod tests {
 
     #[test]
     fn normal_on_transformed_sphere() {
-        let s = Sphere::new_with_default_material(
+        let s = Sphere::new().with_transform(
             Matrix::scaling(1.0, 0.5, 1.0) * Matrix::rotation_z(std::f64::consts::PI / 5.0),
         );
 
@@ -287,7 +285,7 @@ mod tests {
             ambient: 0.1,
             ..Default::default()
         };
-        let s = Sphere::new(Transformation::identity(), m);
+        let s = Sphere::new().with_material(m);
         assert_eq!(s.material, m);
     }
 

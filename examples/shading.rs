@@ -1,7 +1,6 @@
 use raytracer::canvas::*;
 use raytracer::color::*;
 use raytracer::material::*;
-use raytracer::matrix::Transformation;
 use raytracer::point::*;
 use raytracer::point_light::*;
 use raytracer::ray::*;
@@ -27,7 +26,7 @@ fn render_shaded_sphere(dim: usize, path: &str) {
         color: Color::new(1.0, 0.2, 1.0),
         ..Default::default()
     };
-    let s = Sphere::new(Transformation::identity(), material);
+    let s = Sphere::new().with_material(material);
 
     // then add the light source
     let light_position = Point::new(-10.0, 10.0, -10.0);
