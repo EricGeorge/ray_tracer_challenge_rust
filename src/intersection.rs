@@ -16,6 +16,7 @@ pub struct Computations<'a> {
     pub eye_vector: Vector,
     pub normal_vector: Vector,
     pub inside: bool,
+    pub over_point: Point,
 }
 
 impl<'a> Intersection<'a> {
@@ -34,12 +35,15 @@ impl<'a> Intersection<'a> {
             normal_vector
         };
 
+        let over_point = point + normal_vector * 1e-5;
+
         Computations {
             object: self.s,
             point,
             eye_vector,
             normal_vector,
             inside,
+            over_point,
         }
     }
 }

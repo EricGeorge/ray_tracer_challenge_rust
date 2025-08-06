@@ -12,7 +12,7 @@ use super::point_light::PointLight;
 use super::ray::Ray;
 use super::vector::Vector;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Sphere {
     transform: Transformation,
     material: Material,
@@ -100,6 +100,7 @@ impl Sphere {
         light: PointLight,
         eye: Vector,
         normal: Vector,
+        in_shadow: bool,
     ) -> Color {
         let effective_color = self.material.color * light.intensity;
         let light_vector = (light.position - position).normalize();
@@ -109,7 +110,7 @@ impl Sphere {
         let mut diffuse = Color::BLACK;
         let mut specular = Color::BLACK;
 
-        if light_dot_normal >= 0.0 {
+        if light_dot_normal >= 0.0 && !in_shadow {
             diffuse = effective_color * self.material.diffuse * light_dot_normal;
             let reflect_vector = -light_vector.reflect(normal);
             let reflect_dot_eye = reflect_vector.dot(eye);
@@ -296,7 +297,7 @@ mod tests {
         let normal = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::WHITE);
         let s = Sphere::default();
-        let color = s.lighting(position, light, eye, normal);
+        let color = s.lighting(position, light, eye, normal, false);
         assert_eq!(color, Color::new(1.9, 1.9, 1.9));
     }
 
@@ -307,7 +308,7 @@ mod tests {
         let normal = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::WHITE);
         let s = Sphere::default();
-        let color = s.lighting(position, light, eye, normal);
+        let color = s.lighting(position, light, eye, normal, false);
         assert_eq!(color, Color::WHITE);
     }
 
@@ -318,7 +319,7 @@ mod tests {
         let normal = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 10.0, -10.0), Color::WHITE);
         let s = Sphere::default();
-        let color = s.lighting(position, light, eye, normal);
+        let color = s.lighting(position, light, eye, normal, false);
         assert_abs_diff_eq!(color, Color::new(0.7364, 0.7364, 0.7364));
     }
 
@@ -329,7 +330,7 @@ mod tests {
         let normal = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 10.0, -10.0), Color::WHITE);
         let s = Sphere::default();
-        let color = s.lighting(position, light, eye, normal);
+        let color = s.lighting(position, light, eye, normal, false);
         assert_abs_diff_eq!(color, Color::new(1.6364, 1.6364, 1.6364));
     }
 
@@ -340,7 +341,19 @@ mod tests {
         let normal = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 0.0, 10.0), Color::WHITE);
         let s = Sphere::default();
-        let color = s.lighting(position, light, eye, normal);
+        let color = s.lighting(position, light, eye, normal, false);
+        assert_eq!(color, Color::new(0.1, 0.1, 0.1));
+    }
+
+    #[test]
+    fn lighting_with_the_surface_in_shadow() {
+        let position = Point::ORIGIN;
+        let eye = Vector::new(0.0, 0.0, -1.0);
+        let normal = Vector::new(0.0, 0.0, -1.0);
+        let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::WHITE);
+        let s = Sphere::default();
+        let in_shadow = true;
+        let color = s.lighting(position, light, eye, normal, in_shadow);
         assert_eq!(color, Color::new(0.1, 0.1, 0.1));
     }
 }

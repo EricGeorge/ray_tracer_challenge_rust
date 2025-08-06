@@ -51,7 +51,7 @@ fn render_shaded_sphere(dim: usize, path: &str) {
                 let normal = s.normal_at(point);
                 let eye = -r.direction;
 
-                let color = s.lighting(point, light, eye, normal);
+                let color = s.lighting(point, light, eye, normal, false);
                 canvas.write_pixel(x, y, color);
             }
 
