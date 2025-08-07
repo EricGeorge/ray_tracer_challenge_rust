@@ -1,8 +1,9 @@
+use approx::AbsDiffEq;
+
 use super::point::Point;
 use super::ray::Ray;
 use super::sphere::Sphere;
 use super::vector::Vector;
-use approx::AbsDiffEq;
 
 #[derive(Debug, PartialEq)]
 pub struct Intersection<'a> {
@@ -24,6 +25,7 @@ impl<'a> Intersection<'a> {
         Self { t, s }
     }
 
+    // pre-calculate the values that will be used to compute the shading
     pub fn prepare_computations(&'a self, ray: Ray) -> Computations<'a> {
         let point = ray.position(self.t);
         let eye_vector = -ray.direction;
@@ -35,6 +37,9 @@ impl<'a> Intersection<'a> {
             normal_vector
         };
 
+        // due to floating point math errors, we need to offset the point slightly
+        // as it can sometimes calculate the point to be just below the surface of the sphere
+        // instead we nudge it slightly in the normal direction so it's outside of the sphere
         let over_point = point + normal_vector * 1e-5;
 
         Computations {
@@ -64,6 +69,7 @@ pub struct Intersections<'a> {
     list: Vec<Intersection<'a>>,
 }
 
+// intersections are always sorted so it's easy to find the closest intersection
 impl<'a> Intersections<'a> {
     pub fn new(mut intersections: Vec<Intersection<'a>>) -> Self {
         intersections
@@ -81,6 +87,8 @@ impl<'a> Intersections<'a> {
         self.list.is_empty()
     }
 
+    // hit is the first intersection with a positive t value
+    // that is the closest hit
     pub fn hit(&self) -> Option<&Intersection<'a>> {
         self.list.iter().find(|&intersection| intersection.t > 0.0)
     }
@@ -89,6 +97,7 @@ impl<'a> Intersections<'a> {
         &self.list
     }
 
+    // we re-sort on extend so that we always have a sorted list
     pub fn extend(&mut self, other: Intersections<'a>) {
         self.list.extend(other.list);
         self.list

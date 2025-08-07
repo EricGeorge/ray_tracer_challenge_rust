@@ -1,9 +1,5 @@
-// TODO - Mutating objects in the world is clunky - revisit and make more rustic
-
 use super::color::Color;
 use super::intersection::{Computations, Intersections};
-use super::material::Material;
-use super::matrix::Transformation;
 use super::point::Point;
 use super::point_light::PointLight;
 use super::ray::Ray;
@@ -35,30 +31,39 @@ impl World {
         intersections
     }
 
+    // returns the color at the intersection encapsulated by `comps`
+    // in the context of the world
     fn shade_hit(&self, comps: Computations) -> Color {
-        let shadowed = self.is_shadowed(comps.over_point);
         comps.object.lighting(
             comps.point,
             self.light,
             comps.eye_vector,
             comps.normal_vector,
-            shadowed,
+            self.is_shadowed(comps.over_point),
         )
     }
 
     pub fn color_at(&self, ray: Ray) -> Color {
+        // find any intersections the ray makes with the world
         let intersections = self.intersections(ray);
+
+        // and get the first hit
         let hit = intersections.hit();
 
         match hit {
             Some(hit) => {
+                // compute the shading at the intersection point
                 let comps = hit.prepare_computations(ray);
                 self.shade_hit(comps)
             }
+
+            // nothing was hit - return BLACK
             None => Color::BLACK,
         }
     }
 
+    // cast a shadow ray from each intersection to the light
+    // if something intersects the shadow ray, then the point is in shadow
     pub fn is_shadowed(&self, point: Point) -> bool {
         let vector_to_light = self.light.position - point;
         let distance_to_light = vector_to_light.magnitude();
@@ -68,6 +73,7 @@ impl World {
         let intersections = self.intersections(shadow_ray);
 
         if let Some(hit) = intersections.hit() {
+            // if the hit is less than the distance to the light then the point is in shadow
             hit.t < distance_to_light
         } else {
             false
@@ -75,28 +81,32 @@ impl World {
     }
 }
 
-impl Default for World {
-    fn default() -> Self {
-        let light = PointLight::new(Point::new(-10.0, 10.0, -10.0), Color::WHITE);
-        let material = Material {
-            color: Color::new(0.8, 1.0, 0.6),
-            diffuse: 0.7,
-            specular: 0.2,
-            ..Default::default()
-        };
-        let sphere1 = Sphere::new().with_material(material);
-        let sphere2 = Sphere::new().with_transform(Transformation::scaling(0.5, 0.5, 0.5));
-        let objects = vec![sphere1, sphere2];
-        Self::new(objects, light)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::intersection::Intersection;
+    use crate::material::Material;
+    use crate::matrix::Transformation;
     use crate::vector::Vector;
+
     use approx::assert_abs_diff_eq;
+
+    // The default world as described in the book - only for testing
+    impl Default for World {
+        fn default() -> Self {
+            let light = PointLight::new(Point::new(-10.0, 10.0, -10.0), Color::WHITE);
+            let material = Material {
+                color: Color::new(0.8, 1.0, 0.6),
+                diffuse: 0.7,
+                specular: 0.2,
+                ..Default::default()
+            };
+            let sphere1 = Sphere::new().with_material(material);
+            let sphere2 = Sphere::new().with_transform(Transformation::scaling(0.5, 0.5, 0.5));
+            let objects = vec![sphere1, sphere2];
+            Self::new(objects, light)
+        }
+    }
 
     #[test]
     fn test_world_creation() {

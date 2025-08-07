@@ -1,5 +1,6 @@
-use super::color::Color;
 use std::fs;
+
+use super::color::Color;
 
 pub struct Canvas {
     pub width: usize,
@@ -41,7 +42,6 @@ impl Canvas {
             Self::PPM_MAX_COLOR_VALUE
         );
 
-        // alternative version that uses only std library (helped from ChatGPT)
         for row in self.pixels.chunks(self.width) {
             // Step 1: Flatten row into a Vec<String> of scaled R, G, B values
             let mut color_strings = Vec::new();

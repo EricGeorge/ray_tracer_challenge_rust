@@ -19,7 +19,13 @@ impl Camera {
     pub fn new(hsize: usize, vsize: usize, field_of_view: f64) -> Self {
         let transform = Matrix::identity();
 
+        // the camera's canvas is always one unit in front of the camera
+        // this helps with math a little
+        // calculate the pixel size (in world-space units)
+        // use a right triangle to calculate half of the field of view
         let half_view = (field_of_view / 2.0).tan();
+
+        // depending on the aspect ration, half_view is either half the width or height
         let aspect = hsize as f64 / vsize as f64;
         let half_width = if aspect >= 1.0 {
             half_view
@@ -42,7 +48,8 @@ impl Camera {
         }
     }
 
-    pub fn ray_for_pixel(&self, px: usize, py: usize) -> Ray {
+    // calculate the ray that starts at the camera and passes through the point on the canvas
+    fn ray_for_pixel(&self, px: usize, py: usize) -> Ray {
         let xoffset = (px as f64 + 0.5) * self.pixel_size;
         let yoffset = (py as f64 + 0.5) * self.pixel_size;
 
@@ -56,6 +63,8 @@ impl Camera {
         Ray::new(origin, direction)
     }
 
+    // find the color for every pixel in the canvas
+    // Note the on_progress closure is for callers that may implement progress feedback
     pub fn render<F>(&self, world: &World, mut on_progress: F) -> Canvas
     where
         F: FnMut(),

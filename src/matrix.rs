@@ -1,5 +1,6 @@
-use approx::AbsDiffEq;
 use std::ops;
+
+use approx::AbsDiffEq;
 
 use super::point::Point;
 use super::vector::Vector;

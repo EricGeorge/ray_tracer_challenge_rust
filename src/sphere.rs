@@ -1,7 +1,3 @@
-// TODO:  Consider moving lighting logic to a separate module
-//        to keep the Sphere struct focused on geometry and transformations.
-//        This would allow for better separation of concerns and make the code more modular.
-
 use super::color::Color;
 use super::intersection::Intersection;
 use super::intersection::Intersections;
@@ -24,7 +20,7 @@ impl Default for Sphere {
         Self {
             transform: Transformation::identity(),
             material: Material::default(),
-            inverse_transform: Transformation::identity(),
+            inverse_transform: Transformation::identity(), // cache the inverse
         }
     }
 }
@@ -59,18 +55,24 @@ impl Sphere {
         &mut self.material
     }
 
+    // Compute the intersection of a ray and a sphere
+    // note that this function assumes the sphere is at the origin
+    // so any transforms need to be made inversely on the ray to
+    // transform it from world to object space
     pub fn intersect<'a>(&'a self, ray: Ray) -> Intersections<'a> {
+        // *** compute the discriminant ***
         let transformed_ray = ray.transform(self.inverse_transform);
         let sphere_to_ray = transformed_ray.origin - Point::ORIGIN;
         let a = transformed_ray.direction.dot(transformed_ray.direction);
         let b = 2.0 * transformed_ray.direction.dot(sphere_to_ray);
         let c = sphere_to_ray.dot(sphere_to_ray) - Sphere::RADIUS.powi(2);
-
         let discriminant = b.powi(2) - 4.0 * a * c;
 
+        // if the discriminant is negative, there are no intersections
         if discriminant < 0.0 {
             Intersections::empty()
         } else {
+            // solve the quadratic for the intersection points
             let sqrt_disc = discriminant.sqrt();
             let q = if b < 0.0 {
                 (-b + sqrt_disc) / 2.0
@@ -86,14 +88,34 @@ impl Sphere {
         }
     }
 
+    // Compute the normal of the sphere at this point
+    // remember that we need to transform the point into object space first
     pub fn normal_at(&self, point: Point) -> Vector {
         let inverse = self.inverse_transform;
         let object_point = inverse * point;
         let object_normal = object_point - Point::ORIGIN;
+
+        // Note:  normal vectors are transformed using the transpose
+        // of the inverse of the transformation matrix, because this ensures
+        // that the transformed normal vector remains perpendicular to the transformed surface.
         let world_normal = inverse.transpose() * object_normal;
         world_normal.normalize()
     }
 
+    // calculate the lighting at the position on the sphere using the Phong Reflection Model
+    //
+    // Ambient reflection is background lighting, or light reflected from other
+    // objects in the environment. The Phong model treats this as a constant,
+    // coloring all points on the surface equally.
+    //
+    // Diffuse reflection is light reflected from a matte surface. It depends only
+    // on the angle between the light source and the surface normal.
+    //
+    // Specular reflection is the reflection of the light source itself and results in
+    // what is called a specular highlight—the bright spot on a curved surface.
+    // It depends only on the angle between the reflection vector and the eye
+    // vector and is controlled by a parameter that we’ll call shininess. The
+    // higher the shininess, the smaller and tighter the specular highlight.
     pub fn lighting(
         &self,
         position: Point,
@@ -102,23 +124,40 @@ impl Sphere {
         normal: Vector,
         in_shadow: bool,
     ) -> Color {
+        // combine the surface color iwth the ligth's color/intensity
         let effective_color = self.material.color * light.intensity;
+
+        // find the direction of the light source
         let light_vector = (light.position - position).normalize();
+
+        // compute the ambient contribution
         let ambient = effective_color * self.material.ambient;
+
+        // light_dot_normal represents the cosine of the angle between the
+        // light vector and the normal vector. A negative number means the
+        // light is on the other side of the surface.
         let light_dot_normal = light_vector.dot(normal);
 
         let mut diffuse = Color::BLACK;
         let mut specular = Color::BLACK;
 
         if light_dot_normal >= 0.0 && !in_shadow {
+            // compute the diffuse contribution
             diffuse = effective_color * self.material.diffuse * light_dot_normal;
+
+            // reflect_dot_eye represents the cosine of the angle between the
+            // reflection vector and the eye vector. A negative number means the
+            // light reflects away from the eye.
             let reflect_vector = -light_vector.reflect(normal);
             let reflect_dot_eye = reflect_vector.dot(eye);
             if reflect_dot_eye > 0.0 {
+                // compute the specular contribution
                 let factor = reflect_dot_eye.powf(self.material.shininess);
                 specular = light.intensity * self.material.specular * factor;
             }
         }
+
+        // add up all the contributions to get the final shading
         ambient + diffuse + specular
     }
 }
