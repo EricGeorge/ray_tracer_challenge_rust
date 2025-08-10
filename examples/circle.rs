@@ -2,7 +2,7 @@ use raytracer::canvas::*;
 use raytracer::color::*;
 use raytracer::point::*;
 use raytracer::ray::*;
-use raytracer::sphere::*;
+use raytracer::shapes::{Shape, Sphere};
 use raytracer::utils::create_progress_bar;
 
 fn main() {
@@ -21,7 +21,7 @@ fn plot_circle(dim: usize, path: &str) {
 
     let mut canvas = Canvas::empty(canvas_pixels, canvas_pixels);
 
-    let s = Sphere::default();
+    let s = Shape::Sphere(Sphere::default());
 
     // progress bar setup
     let pb = create_progress_bar((canvas_pixels * canvas_pixels) as u64);

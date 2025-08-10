@@ -4,7 +4,7 @@ use raytracer::material::*;
 use raytracer::point::*;
 use raytracer::point_light::*;
 use raytracer::ray::*;
-use raytracer::sphere::*;
+use raytracer::shapes::{Shape, Sphere};
 use raytracer::utils::create_progress_bar;
 
 fn main() {
@@ -26,7 +26,7 @@ fn render_shaded_sphere(dim: usize, path: &str) {
         color: Color::new(1.0, 0.2, 1.0),
         ..Default::default()
     };
-    let s = Sphere::new().with_material(material);
+    let s = Shape::Sphere(Sphere::new()).with_material(material);
 
     // then add the light source
     let light_position = Point::new(-10.0, 10.0, -10.0);
