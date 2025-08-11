@@ -1,10 +1,8 @@
 use super::sphere::Sphere;
-use crate::color::Color;
 use crate::intersection::Intersections;
 use crate::material::Material;
 use crate::matrix::Transformation;
 use crate::point::Point;
-use crate::point_light::PointLight;
 use crate::ray::Ray;
 use crate::vector::Vector;
 
@@ -20,10 +18,7 @@ impl Shape {
             Shape::Sphere(s) => {
                 // world -> object space for this shape
                 let ray_obj = ray_world.transform(*s.inverse_transform());
-                // get raw t’s
-                let ts = s.local_intersect(ray_obj);
-                // wrap into Intersections that borrow `&Shape`
-                Intersections::from_ts(ts, self)
+                Intersections::from_ts(s.local_intersect(ray_obj), self)
             } // Shape::Plane(p) => {
               //     let ray_obj = ray_world.transform(p.inverse_transform);
               //     let ts = p.local_intersect(ray_obj);
@@ -37,7 +32,10 @@ impl Shape {
             Shape::Sphere(s) => {
                 let inv = *s.inverse_transform();
                 let p_obj = inv * p_world;
-                // transform normal back to world space with inverse-transpose
+
+                // Note:  normal vectors are transformed using the transpose
+                // of the inverse of the transformation matrix, because this ensures
+                // that the transformed normal vector remains perpendicular to the transformed surface.
                 (inv.transpose() * s.local_normal_at(p_obj)).normalize()
             } // Shape::Plane(p) => {
               //     let inv = p.inverse_transform;
@@ -47,24 +45,17 @@ impl Shape {
         }
     }
 
-    pub fn lighting(
-        &self,
-        position: Point,
-        light: PointLight,
-        eye: Vector,
-        normal: Vector,
-        in_shadow: bool,
-    ) -> Color {
-        match self {
-            Shape::Sphere(s) => s.lighting(position, light, eye, normal, in_shadow),
-            // Shape::Plane(p) => p.lighting(position, light, eye, normal, in_shadow),
-        }
-    }
-
     pub fn with_transform(self, t: Transformation) -> Self {
         match self {
             Shape::Sphere(s) => Shape::Sphere(s.with_transform(t)),
             // Shape::Plane(p) => Shape::Plane(p.with_transform(t)),
+        }
+    }
+
+    pub fn transform(&self) -> &Transformation {
+        match self {
+            Shape::Sphere(s) => s.transform(),
+            // Shape::Plane(p) => p.transform(),
         }
     }
 

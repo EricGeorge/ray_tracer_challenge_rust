@@ -34,7 +34,7 @@ impl World {
     // returns the color at the intersection encapsulated by `comps`
     // in the context of the world
     fn shade_hit(&self, comps: Computations) -> Color {
-        comps.object.lighting(
+        comps.object.material().shade(
             comps.point,
             self.light,
             comps.eye_vector,

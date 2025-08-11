@@ -1,4 +1,7 @@
 use super::color::Color;
+use super::point::Point;
+use super::point_light::PointLight;
+use super::vector::Vector;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Material {
@@ -30,6 +33,65 @@ impl Material {
             specular,
             shininess,
         }
+    }
+
+    // calculate the lighting at the position on the sphere using the Phong Reflection Model
+    //
+    // Ambient reflection is background lighting, or light reflected from other
+    // objects in the environment. The Phong model treats this as a constant,
+    // coloring all points on the surface equally.
+    //
+    // Diffuse reflection is light reflected from a matte surface. It depends only
+    // on the angle between the light source and the surface normal.
+    //
+    // Specular reflection is the reflection of the light source itself and results in
+    // what is called a specular highlight—the bright spot on a curved surface.
+    // It depends only on the angle between the reflection vector and the eye
+    // vector and is controlled by a parameter that we’ll call shininess. The
+    // higher the shininess, the smaller and tighter the specular highlight.
+    pub fn shade(
+        &self,
+        position: Point,
+        light: PointLight,
+        eye: Vector,
+        normal: Vector,
+        in_shadow: bool,
+    ) -> Color {
+        // combine the surface color iwth the ligth's color/intensity
+        let effective_color = self.color * light.intensity;
+
+        // find the direction of the light source
+        let light_vector = (light.position - position).normalize();
+
+        // compute the ambient contribution
+        let ambient = effective_color * self.ambient;
+
+        // light_dot_normal represents the cosine of the angle between the
+        // light vector and the normal vector. A negative number means the
+        // light is on the other side of the surface.
+        let light_dot_normal = light_vector.dot(normal);
+
+        let mut diffuse = Color::BLACK;
+        let mut specular = Color::BLACK;
+
+        if light_dot_normal >= 0.0 && !in_shadow {
+            // compute the diffuse contribution
+            diffuse = effective_color * self.diffuse * light_dot_normal;
+
+            // reflect_dot_eye represents the cosine of the angle between the
+            // reflection vector and the eye vector. A negative number means the
+            // light reflects away from the eye.
+            let reflect_vector = -light_vector.reflect(normal);
+            let reflect_dot_eye = reflect_vector.dot(eye);
+            if reflect_dot_eye > 0.0 {
+                // compute the specular contribution
+                let factor = reflect_dot_eye.powf(self.shininess);
+                specular = light.intensity * self.specular * factor;
+            }
+        }
+
+        // add up all the contributions to get the final shading
+        ambient + diffuse + specular
     }
 }
 
