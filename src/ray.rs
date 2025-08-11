@@ -1,6 +1,6 @@
-use super::matrix::Transformation;
-use super::point::Point;
-use super::vector::Vector;
+use crate::matrix::Transformation;
+use crate::point::Point;
+use crate::vector::Vector;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Ray {

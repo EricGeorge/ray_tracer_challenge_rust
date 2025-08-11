@@ -2,7 +2,7 @@ use std::ops;
 
 use approx::AbsDiffEq;
 
-use super::point::Point;
+use crate::point::Point;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vector {

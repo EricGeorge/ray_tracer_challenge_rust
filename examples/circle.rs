@@ -21,7 +21,7 @@ fn plot_circle(dim: usize, path: &str) {
 
     let mut canvas = Canvas::empty(canvas_pixels, canvas_pixels);
 
-    let s = Shape::Sphere(Sphere::default());
+    let s = Shape::from(Sphere::default());
 
     // progress bar setup
     let pb = create_progress_bar((canvas_pixels * canvas_pixels) as u64);

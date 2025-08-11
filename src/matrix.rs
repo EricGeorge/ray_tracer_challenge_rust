@@ -2,8 +2,8 @@ use std::ops;
 
 use approx::AbsDiffEq;
 
-use super::point::Point;
-use super::vector::Vector;
+use crate::point::Point;
+use crate::vector::Vector;
 
 pub type Transformation = Matrix<4>;
 

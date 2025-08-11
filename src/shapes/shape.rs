@@ -1,9 +1,10 @@
-use super::sphere::Sphere;
+// use crate::Sphere;
 use crate::intersection::Intersections;
 use crate::material::Material;
 use crate::matrix::Transformation;
 use crate::point::Point;
 use crate::ray::Ray;
+use crate::shapes::sphere::Sphere;
 use crate::vector::Vector;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -78,5 +79,11 @@ impl Shape {
             Shape::Sphere(s) => s.material_mut(),
             // Shape::Plane(p) => p.material_mut(),
         }
+    }
+}
+
+impl From<Sphere> for Shape {
+    fn from(s: Sphere) -> Self {
+        Shape::Sphere(s)
     }
 }

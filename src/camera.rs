@@ -1,8 +1,8 @@
-use super::canvas::Canvas;
-use super::matrix::Matrix;
-use super::point::Point;
-use super::ray::Ray;
-use super::world::World;
+use crate::canvas::Canvas;
+use crate::matrix::Matrix;
+use crate::point::Point;
+use crate::ray::Ray;
+use crate::world::World;
 
 #[derive(Debug)]
 pub struct Camera {

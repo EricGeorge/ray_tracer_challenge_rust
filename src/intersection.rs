@@ -1,9 +1,10 @@
 use approx::AbsDiffEq;
 
-use super::point::Point;
-use super::ray::Ray;
-use super::vector::Vector;
+use crate::point::Point;
+use crate::ray::Ray;
 use crate::shapes::Shape;
+use crate::utils::EPSILON;
+use crate::vector::Vector;
 
 #[derive(Debug, PartialEq)]
 pub struct Intersection<'a> {
@@ -40,7 +41,7 @@ impl<'a> Intersection<'a> {
         // due to floating point math errors, we need to offset the point slightly
         // as it can sometimes calculate the point to be just below the surface of the sphere
         // instead we nudge it slightly in the normal direction so it's outside of the sphere
-        let over_point = point + normal_vector * 1e-5;
+        let over_point = point + normal_vector * EPSILON;
 
         Computations {
             object: self.s,
@@ -125,7 +126,7 @@ mod tests {
 
     #[test]
     fn create_intersection() {
-        let s = Shape::Sphere(Sphere::new());
+        let s = Shape::from(Sphere::new());
         let i = Intersection::new(3.5, &s);
 
         assert_abs_diff_eq!(i.t, 3.5);
@@ -135,7 +136,7 @@ mod tests {
     #[test]
     fn intersect_sets_object_on_intersection() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::Sphere(Sphere::new());
+        let s = Shape::from(Sphere::new());
         let i = s.intersect(r);
         assert_eq!(i.list[0].s, &s);
         assert_eq!(i.list[1].s, &s);
@@ -143,7 +144,7 @@ mod tests {
 
     #[test]
     fn hit_all_positive() {
-        let s = Shape::Sphere(Sphere::new());
+        let s = Shape::from(Sphere::new());
         let i1 = Intersection::new(1.0, &s);
         let i2 = Intersection::new(2.0, &s);
 
@@ -155,7 +156,7 @@ mod tests {
 
     #[test]
     fn hit_some_negative() {
-        let s = Shape::Sphere(Sphere::new());
+        let s = Shape::from(Sphere::new());
         let i1 = Intersection::new(-1.0, &s);
         let i2 = Intersection::new(1.0, &s);
 
@@ -168,7 +169,7 @@ mod tests {
 
     #[test]
     fn hit_all_negative() {
-        let s = Shape::Sphere(Sphere::new());
+        let s = Shape::from(Sphere::new());
         let i1 = Intersection::new(-2.0, &s);
         let i2 = Intersection::new(-1.0, &s);
 
@@ -179,7 +180,7 @@ mod tests {
 
     #[test]
     fn hit_lowest_nonnegative() {
-        let s = Shape::Sphere(Sphere::new());
+        let s = Shape::from(Sphere::new());
         let i1 = Intersection::new(5.0, &s);
         let i2 = Intersection::new(7.0, &s);
         let i3 = Intersection::new(-3.0, &s);
@@ -196,7 +197,7 @@ mod tests {
     #[test]
     fn prepare_computations() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::Sphere(Sphere::new());
+        let s = Shape::from(Sphere::new());
         let i = Intersection::new(4.0, &s);
         let comps = i.prepare_computations(r);
 
@@ -209,7 +210,7 @@ mod tests {
     #[test]
     fn prepare_computations_inside() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::Sphere(Sphere::new());
+        let s = Shape::from(Sphere::new());
         let i = Intersection::new(4.0, &s);
         let comps = i.prepare_computations(r);
 
@@ -219,7 +220,7 @@ mod tests {
     #[test]
     fn prepare_computations_inside_object() {
         let r = Ray::new(Point::new(0.0, 0.0, 0.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Shape::Sphere(Sphere::new());
+        let s = Shape::from(Sphere::new());
         let i = Intersection::new(1.0, &s);
         let comps = i.prepare_computations(r);
 

@@ -1,5 +1,5 @@
-use super::color::Color;
-use super::point::Point;
+use crate::color::Color;
+use crate::point::Point;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PointLight {

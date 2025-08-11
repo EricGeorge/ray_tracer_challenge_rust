@@ -1,9 +1,9 @@
-use super::color::Color;
-use super::point::Point;
-use super::point_light::PointLight;
-use super::vector::Vector;
+use crate::color::Color;
+use crate::point::Point;
+use crate::point_light::PointLight;
+use crate::vector::Vector;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Material {
     pub color: Color,
     pub ambient: f64,
