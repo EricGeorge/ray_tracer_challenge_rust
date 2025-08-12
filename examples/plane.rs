@@ -10,7 +10,7 @@ use raytracer::vector::*;
 use raytracer::world::*;
 
 fn main() {
-    render_scene(1000, 500, "./images/ppm/plane.ppm");
+    render_scene(4000, 2000, "./images/ppm/plane.ppm");
 }
 
 fn render_scene(hsize: usize, vsize: usize, path: &str) {

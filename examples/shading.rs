@@ -7,7 +7,7 @@ use raytracer::ray::*;
 use raytracer::shapes::{Shape, Sphere};
 
 fn main() {
-    render_shaded_sphere(800, "./images/ppm/shading.ppm");
+    render_shaded_sphere(2000, "./images/ppm/shading.ppm");
 }
 
 fn render_shaded_sphere(dim: usize, path: &str) {
