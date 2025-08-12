@@ -1,3 +1,4 @@
+use crate::intersection::LocalHits;
 use crate::point::Point;
 use crate::ray::Ray;
 use crate::vector::Vector;
@@ -18,7 +19,7 @@ impl Sphere {
 
     // Compute the intersection of a ray and a sphere
     // Assumes `ray_obj` is already in object space
-    pub fn local_intersect(&self, ray_obj: Ray) -> Option<(f64, f64)> {
+    pub fn local_intersect(&self, ray_obj: Ray) -> LocalHits {
         let sphere_to_ray = ray_obj.origin - Point::ORIGIN;
         let a = ray_obj.direction.dot(ray_obj.direction);
         let b = 2.0 * ray_obj.direction.dot(sphere_to_ray);
@@ -26,7 +27,7 @@ impl Sphere {
 
         let discriminant = b * b - 4.0 * a * c;
         if discriminant < 0.0 {
-            None
+            LocalHits::None
         } else {
             let sqrt_disc = discriminant.sqrt();
             let q = if b < 0.0 {
@@ -39,13 +40,13 @@ impl Sphere {
 
             // Sort ascending so callers don't care about order.
             let (lo, hi) = if t1 <= t2 { (t1, t2) } else { (t2, t1) };
-            Some((lo, hi))
+            LocalHits::Two(lo, hi)
         }
     }
 
     // Object-space normal
-    pub fn local_normal_at(&self, p_obj: Point) -> Vector {
-        (p_obj - Point::ORIGIN).normalize()
+    pub fn local_normal_at(&self, point: Point) -> Vector {
+        (point - Point::ORIGIN).normalize()
     }
 }
 

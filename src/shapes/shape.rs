@@ -5,6 +5,7 @@ use crate::material::Material;
 use crate::matrix::Transformation;
 use crate::point::Point;
 use crate::ray::Ray;
+use crate::shapes::plane::Plane;
 use crate::shapes::sphere::Sphere;
 use crate::vector::Vector;
 
@@ -19,7 +20,7 @@ pub struct Shape {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Geometry {
     Sphere(Sphere),
-    // Plane(Plane),
+    Plane(Plane),
 }
 
 impl Shape {
@@ -29,6 +30,15 @@ impl Shape {
             inverse_transform: Transformation::identity(),
             material: Material::default(),
             geom: Geometry::Sphere(Sphere::new()),
+        }
+    }
+
+    pub fn plane() -> Self {
+        Self {
+            transform: Transformation::identity(),
+            inverse_transform: Transformation::identity(),
+            material: Material::default(),
+            geom: Geometry::Plane(Plane::new()),
         }
     }
 
@@ -61,20 +71,20 @@ impl Shape {
     }
 
     pub fn intersect<'a>(&'a self, ray_world: Ray) -> Intersections<'a> {
-        // world -> object space once, here
         let ray_obj = ray_world.transform(self.inverse_transform);
-        match &self.geom {
-            Geometry::Sphere(s) => match s.local_intersect(ray_obj) {
-                None => Intersections::empty(),
-                Some((t1, t2)) => {
-                    let list = vec![
-                        Intersection { t: t1, s: self },
-                        Intersection { t: t2, s: self },
-                    ];
-                    Intersections::from_sorted(list)
-                }
-            },
-            // Geometry::Plane(p) => Intersections::from_ts(p.local_intersect(ray_obj), self),
+        let hits = match &self.geom {
+            Geometry::Sphere(s) => s.local_intersect(ray_obj).iter().collect::<Vec<_>>(),
+            Geometry::Plane(p) => p.local_intersect(ray_obj).iter().collect::<Vec<_>>(),
+        };
+
+        if hits.is_empty() {
+            Intersections::empty()
+        } else {
+            let list = hits
+                .into_iter()
+                .map(|t| Intersection { t, s: self })
+                .collect::<Vec<_>>();
+            Intersections::from_sorted(list)
         }
     }
 
@@ -85,7 +95,7 @@ impl Shape {
         // ask the geometry for its local-space normal
         let n_obj = match &self.geom {
             Geometry::Sphere(s) => s.local_normal_at(p_obj),
-            // Geometry::Plane(p) => p.local_normal_at(p_obj),
+            Geometry::Plane(p) => p.local_normal_at(p_obj),
         };
 
         // transform normal back to world space using (inverse^T)
@@ -96,5 +106,11 @@ impl Shape {
 impl From<Sphere> for Shape {
     fn from(s: Sphere) -> Self {
         Shape::sphere().with_geometry(Geometry::Sphere(s))
+    }
+}
+
+impl From<Plane> for Shape {
+    fn from(s: Plane) -> Self {
+        Shape::plane().with_geometry(Geometry::Plane(s))
     }
 }

@@ -6,6 +6,25 @@ use crate::shapes::Shape;
 use crate::utils::EPSILON;
 use crate::vector::Vector;
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum LocalHits {
+    None,          // 0 intersections
+    One(f64),      // 1 intersection at t
+    Two(f64, f64), // 2 intersections at t1 and t2 (sorted)
+}
+
+impl LocalHits {
+    pub fn iter(self) -> impl Iterator<Item = f64> {
+        let arr: [Option<f64>; 2] = match self {
+            LocalHits::None => [None, None],
+            LocalHits::One(a) => [Some(a), None],
+            LocalHits::Two(a, b) => [Some(a), Some(b)],
+        };
+
+        arr.into_iter().flatten()
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Intersection<'a> {
     pub t: f64,

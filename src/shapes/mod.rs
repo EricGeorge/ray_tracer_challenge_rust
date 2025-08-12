@@ -1,7 +1,7 @@
+pub use plane::*;
 pub use shape::*;
 pub use sphere::*;
-// pub use plane::*;
 
+mod plane;
 mod shape;
 mod sphere;
-// mod plane;
