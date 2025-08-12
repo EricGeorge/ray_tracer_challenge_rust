@@ -1,11 +1,14 @@
 use crate::color::Color;
+use crate::pattern::Pattern;
 use crate::point::Point;
 use crate::point_light::PointLight;
+use crate::shapes::Shape;
 use crate::vector::Vector;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Material {
     pub color: Color,
+    pub pattern: Option<Pattern>,
     pub ambient: f64,
     pub diffuse: f64,
     pub specular: f64,
@@ -16,6 +19,7 @@ impl Default for Material {
     fn default() -> Self {
         Self {
             color: Color::WHITE,
+            pattern: None,
             ambient: 0.1,
             diffuse: 0.9,
             specular: 0.9,
@@ -25,9 +29,17 @@ impl Default for Material {
 }
 
 impl Material {
-    pub fn new(color: Color, ambient: f64, diffuse: f64, specular: f64, shininess: f64) -> Self {
+    pub fn new(
+        color: Color,
+        pattern: Option<Pattern>,
+        ambient: f64,
+        diffuse: f64,
+        specular: f64,
+        shininess: f64,
+    ) -> Self {
         Self {
             color,
+            pattern,
             ambient,
             diffuse,
             specular,
@@ -51,6 +63,7 @@ impl Material {
     // higher the shininess, the smaller and tighter the specular highlight.
     pub fn shade(
         &self,
+        object: &Shape,
         position: Point,
         light: PointLight,
         eye: Vector,
@@ -58,7 +71,11 @@ impl Material {
         in_shadow: bool,
     ) -> Color {
         // combine the surface color iwth the ligth's color/intensity
-        let effective_color = self.color * light.intensity;
+        let effective_color = if let Some(pattern) = &self.pattern {
+            pattern.stripe_at_object(object, position)
+        } else {
+            self.color * light.intensity
+        };
 
         // find the direction of the light source
         let light_vector = (light.position - position).normalize();
@@ -111,10 +128,38 @@ mod tests {
 
     #[test]
     fn custom_material() {
-        let m = Material::new(Color::new(0.2, 0.8, 0.7), 0.2, 0.8, 0.7, 150.0);
+        let m = Material::new(Color::new(0.2, 0.8, 0.7), None, 0.2, 0.8, 0.7, 150.0);
         assert_abs_diff_eq!(m.ambient, 0.2);
         assert_abs_diff_eq!(m.diffuse, 0.8);
         assert_abs_diff_eq!(m.specular, 0.7);
         assert_abs_diff_eq!(m.shininess, 150.0);
+    }
+
+    #[test]
+    fn lighting_with_a_pattern_applied() {
+        let pattern = Pattern::striped(Color::new(1.0, 1.0, 1.0), Color::new(0.0, 0.0, 0.0));
+        let m = Material::new(Color::new(1.0, 1.0, 1.0), Some(pattern), 1.0, 0.0, 0.0, 0.0);
+        let eye_vector = Vector::new(0.0, 0.0, -1.0);
+        let normal_vector = Vector::new(0.0, 0.0, -1.0);
+        let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
+        let c1 = m.shade(
+            &Shape::sphere(),
+            Point::new(0.9, 0.0, 0.0),
+            light,
+            eye_vector,
+            normal_vector,
+            false,
+        );
+        let c2 = m.shade(
+            &Shape::sphere(),
+            Point::new(1.1, 0.0, 0.0),
+            light,
+            eye_vector,
+            normal_vector,
+            false,
+        );
+
+        assert_eq!(c1, Color::new(1.0, 1.0, 1.0));
+        assert_eq!(c2, Color::new(0.0, 0.0, 0.0));
     }
 }

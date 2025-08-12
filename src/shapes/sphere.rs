@@ -230,7 +230,9 @@ mod tests {
         let normal = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::WHITE);
         let s = Shape::from(Sphere::new());
-        let color = s.material().shade(position, light, eye, normal, false);
+        let color = s
+            .material()
+            .shade(&Shape::sphere(), position, light, eye, normal, false);
         assert_eq!(color, Color::new(1.9, 1.9, 1.9));
     }
 
@@ -241,7 +243,9 @@ mod tests {
         let normal = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::WHITE);
         let s = Shape::from(Sphere::new());
-        let color = s.material().shade(position, light, eye, normal, false);
+        let color = s
+            .material()
+            .shade(&Shape::sphere(), position, light, eye, normal, false);
         assert_eq!(color, Color::WHITE);
     }
 
@@ -252,7 +256,9 @@ mod tests {
         let normal = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 10.0, -10.0), Color::WHITE);
         let s = Shape::from(Sphere::new());
-        let color = s.material().shade(position, light, eye, normal, false);
+        let color = s
+            .material()
+            .shade(&Shape::sphere(), position, light, eye, normal, false);
         assert_abs_diff_eq!(color, Color::new(0.7364, 0.7364, 0.7364));
     }
 
@@ -263,7 +269,9 @@ mod tests {
         let normal = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 10.0, -10.0), Color::WHITE);
         let s = Shape::from(Sphere::new());
-        let color = s.material().shade(position, light, eye, normal, false);
+        let color = s
+            .material()
+            .shade(&Shape::sphere(), position, light, eye, normal, false);
         assert_abs_diff_eq!(color, Color::new(1.6364, 1.6364, 1.6364));
     }
 
@@ -274,7 +282,9 @@ mod tests {
         let normal = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 0.0, 10.0), Color::WHITE);
         let s = Shape::from(Sphere::new());
-        let color = s.material().shade(position, light, eye, normal, false);
+        let color = s
+            .material()
+            .shade(&Shape::sphere(), position, light, eye, normal, false);
         assert_eq!(color, Color::new(0.1, 0.1, 0.1));
     }
 
@@ -286,7 +296,9 @@ mod tests {
         let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::WHITE);
         let s = Shape::from(Sphere::new());
         let in_shadow = true;
-        let color = s.material().shade(position, light, eye, normal, in_shadow);
+        let color = s
+            .material()
+            .shade(&Shape::sphere(), position, light, eye, normal, in_shadow);
         assert_eq!(color, Color::new(0.1, 0.1, 0.1));
     }
 }

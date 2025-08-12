@@ -57,6 +57,7 @@ impl World {
     // in the context of the world
     fn shade_hit(&self, comps: Computations) -> Color {
         comps.object.material().shade(
+            comps.object,
             comps.point,
             self.light,
             comps.eye_vector,

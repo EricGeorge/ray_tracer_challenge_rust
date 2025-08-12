@@ -3,6 +3,9 @@ name = "raytracer"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+doctest = false
+
 [dependencies]
 approx = "0.5.1"
 rayon = "1.10.0"

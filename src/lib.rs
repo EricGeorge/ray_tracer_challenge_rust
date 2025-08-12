@@ -4,6 +4,7 @@ pub mod color;
 pub mod intersection;
 pub mod material;
 pub mod matrix;
+pub mod pattern;
 pub mod point;
 pub mod point_light;
 pub mod ray;
