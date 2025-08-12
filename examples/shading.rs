@@ -5,7 +5,6 @@ use raytracer::point::*;
 use raytracer::point_light::*;
 use raytracer::ray::*;
 use raytracer::shapes::{Shape, Sphere};
-use raytracer::utils::create_progress_bar;
 
 fn main() {
     render_shaded_sphere(800, "./images/ppm/shading.ppm");
@@ -33,9 +32,6 @@ fn render_shaded_sphere(dim: usize, path: &str) {
     let light_color = Color::WHITE;
     let light = PointLight::new(light_position, light_color);
 
-    // progress bar setup
-    let pb = create_progress_bar((canvas_pixels * canvas_pixels) as u64);
-
     for y in 0..canvas_pixels {
         let world_y = half - pixel_size * y as f64;
 
@@ -54,9 +50,6 @@ fn render_shaded_sphere(dim: usize, path: &str) {
                 let color = s.material().shade(point, light, eye, normal, false);
                 canvas.write_pixel(x, y, color);
             }
-
-            // update progress bar
-            pb.inc(1);
         }
     }
     canvas.write_ppm(path);

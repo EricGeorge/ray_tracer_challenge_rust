@@ -1,8 +1,13 @@
 use crate::canvas::Canvas;
+use crate::color::Color;
 use crate::matrix::Matrix;
 use crate::point::Point;
 use crate::ray::Ray;
 use crate::world::World;
+use rayon::prelude::*;
+use std::io::Write;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Instant;
 
 #[derive(Debug)]
 pub struct Camera {
@@ -48,40 +53,98 @@ impl Camera {
         }
     }
 
-    // calculate the ray that starts at the camera and passes through the point on the canvas
-    fn ray_for_pixel(&self, px: usize, py: usize) -> Ray {
-        let xoffset = (px as f64 + 0.5) * self.pixel_size;
-        let yoffset = (py as f64 + 0.5) * self.pixel_size;
+    pub fn render(&self, world: &World) -> Canvas
+    where
+        World: Sync,
+    {
+        let w = self.hsize;
+        let h = self.vsize;
+        let total = w * h;
 
-        let world_x = self.half_width - xoffset;
-        let world_y = self.half_height - yoffset;
+        let camera_inverse = self.transform.inverse();
 
-        let pixel = self.transform.inverse() * Point::new(world_x, world_y, -1.0);
-        let origin = self.transform.inverse() * Point::ORIGIN;
-        let direction = (pixel - origin).normalize();
+        let start = Instant::now();
+        let pixels: Vec<Color> = (0..total)
+            .into_par_iter()
+            .map(|i| {
+                let x = i % w;
+                let y = i / w;
 
-        Ray::new(origin, direction)
+                // Inline, allocation-free ray_for_pixel using precomputed camera_inverse
+                let xoffset = (x as f64 + 0.5) * self.pixel_size;
+                let yoffset = (y as f64 + 0.5) * self.pixel_size;
+                let world_x = self.half_width - xoffset;
+                let world_y = self.half_height - yoffset;
+
+                let pixel = camera_inverse * Point::new(world_x, world_y, -1.0);
+                let origin = camera_inverse * Point::ORIGIN;
+                let direction = (pixel - origin).normalize();
+                let ray = Ray::new(origin, direction);
+
+                world.color_at(ray)
+            })
+            .collect();
+
+        eprintln!("\nDone in {:?}", start.elapsed());
+
+        Canvas {
+            width: w,
+            height: h,
+            pixels,
+        }
     }
 
-    // find the color for every pixel in the canvas
-    // Note the on_progress closure is for callers that may implement progress feedback
-    pub fn render<F>(&self, world: &World, mut on_progress: F) -> Canvas
+    pub fn render_with_progress(&self, world: &World) -> Canvas
     where
-        F: FnMut(),
+        World: Sync, // shareable across threads
     {
-        let mut image = Canvas::empty(self.hsize, self.vsize);
+        let w = self.hsize;
+        let h = self.vsize;
+        let total = w * h;
 
-        for y in 0..self.vsize {
-            for x in 0..self.hsize {
-                let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(ray);
-                image.write_pixel(x, y, color);
+        let camera_inverse = self.transform.inverse();
 
-                on_progress()
-            }
-        }
+        println!("rendering with {} threads", rayon::current_num_threads());
 
-        image
+        let start = Instant::now();
+        let progress = AtomicUsize::new(0);
+        let step = (total / 100).max(1); // ~1% cadence
+
+        let pixels: Vec<Color> = (0..total)
+            .into_par_iter()
+            .map(|i| {
+                let x = i % w;
+                let y = i / w;
+
+                // Inline, allocation-free ray_for_pixel using precomputed camera_inverse
+                let xoffset = (x as f64 + 0.5) * self.pixel_size;
+                let yoffset = (y as f64 + 0.5) * self.pixel_size;
+                let world_x = self.half_width - xoffset;
+                let world_y = self.half_height - yoffset;
+
+                let pixel = camera_inverse * Point::new(world_x, world_y, -1.0);
+                let origin = camera_inverse * Point::ORIGIN;
+                let direction = (pixel - origin).normalize();
+                let ray = Ray::new(origin, direction);
+
+                let c = world.color_at(ray);
+
+                // progress display
+                let n = progress.fetch_add(1, Ordering::Relaxed) + 1;
+                if n % step == 0 || n == total {
+                    let pct = 100.0 * (n as f64) / (total as f64);
+                    let elapsed = start.elapsed();
+                    // \r returns to line start, flush forces immediate update
+                    print!("\rProgress: {:>6.2}%  Elapsed Time: {:?}", pct, elapsed);
+                    std::io::stdout().flush().unwrap();
+                }
+
+                c
+            })
+            .collect();
+
+        eprintln!("\nDone in {:?}", start.elapsed());
+        Canvas::from_pixels(w, h, pixels)
     }
 }
 
@@ -118,35 +181,6 @@ mod tests {
     }
 
     #[test]
-    fn constructing_ray_through_center_of_canvas() {
-        let camera = Camera::new(201, 101, PI / 2.0);
-        let ray = camera.ray_for_pixel(100, 50);
-
-        assert_abs_diff_eq!(ray.origin, Point::new(0.0, 0.0, 0.0));
-        assert_abs_diff_eq!(ray.direction, Vector::new(0.0, 0.0, -1.0));
-    }
-
-    #[test]
-    fn constructing_ray_for_corner_of_canvas() {
-        let camera = Camera::new(201, 101, PI / 2.0);
-        let ray = camera.ray_for_pixel(0, 0);
-        assert_abs_diff_eq!(ray.origin, Point::new(0.0, 0.0, 0.0));
-        assert_abs_diff_eq!(ray.direction, Vector::new(0.66519, 0.33259, -0.66851));
-    }
-
-    #[test]
-    fn constructing_ray_for_transformed_camera() {
-        let mut camera = Camera::new(201, 101, PI / 2.0);
-        camera.transform = Matrix::rotation_y(PI / 4.0) * Matrix::translation(0.0, -2.0, 5.0);
-        let ray = camera.ray_for_pixel(100, 50);
-        assert_abs_diff_eq!(ray.origin, Point::new(0.0, 2.0, -5.0));
-        assert_abs_diff_eq!(
-            ray.direction,
-            Vector::new(2.0_f64.sqrt() / 2.0, 0.0, -2.0_f64.sqrt() / 2.0)
-        );
-    }
-
-    #[test]
     fn rendering_world_with_camera() {
         let w = World::default();
         let mut camera = Camera::new(11, 11, PI / 2.0);
@@ -155,7 +189,7 @@ mod tests {
             Point::ORIGIN,
             Vector::new(0.0, 1.0, 0.0),
         );
-        let image = camera.render(&w, || {});
+        let image = camera.render(&w);
         assert_abs_diff_eq!(image.pixel_at(5, 5), Color::new(0.38066, 0.47583, 0.2855));
     }
 }

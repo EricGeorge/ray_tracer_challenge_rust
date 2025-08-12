@@ -33,6 +33,15 @@ impl Canvas {
         self.pixels[x + y * self.width]
     }
 
+    pub fn from_pixels(width: usize, height: usize, pixels: Vec<Color>) -> Self {
+        debug_assert_eq!(pixels.len(), width * height);
+        Self {
+            width,
+            height,
+            pixels,
+        }
+    }
+
     pub fn to_ppm(&self) -> String {
         let mut ppm = format!(
             "{}\n{} {}\n{}\n",

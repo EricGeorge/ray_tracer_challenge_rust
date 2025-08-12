@@ -3,7 +3,6 @@ use raytracer::color::*;
 use raytracer::point::*;
 use raytracer::ray::*;
 use raytracer::shapes::{Shape, Sphere};
-use raytracer::utils::create_progress_bar;
 
 fn main() {
     plot_circle(800, "./images/ppm/circle.ppm");
@@ -23,9 +22,6 @@ fn plot_circle(dim: usize, path: &str) {
 
     let s = Shape::from(Sphere::new());
 
-    // progress bar setup
-    let pb = create_progress_bar((canvas_pixels * canvas_pixels) as u64);
-
     for y in 0..canvas_pixels {
         let world_y = half - pixel_size * y as f64;
 
@@ -39,9 +35,6 @@ fn plot_circle(dim: usize, path: &str) {
             if i.hit().is_some() {
                 canvas.write_pixel(x, y, red);
             }
-
-            // update progress bar
-            pb.inc(1);
         }
     }
     canvas.write_ppm(path);
