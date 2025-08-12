@@ -7,83 +7,84 @@ use crate::ray::Ray;
 use crate::shapes::sphere::Sphere;
 use crate::vector::Vector;
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum Shape {
+#[derive(Debug, Clone, PartialEq)]
+pub struct Shape {
+    transform: Transformation,
+    inverse_transform: Transformation, // cached inverse
+    material: Material,
+    geom: Geometry,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Geometry {
     Sphere(Sphere),
     // Plane(Plane),
 }
 
 impl Shape {
+    pub fn sphere() -> Self {
+        Self {
+            transform: Transformation::identity(),
+            inverse_transform: Transformation::identity(),
+            material: Material::default(),
+            geom: Geometry::Sphere(Sphere::new()),
+        }
+    }
+
+    fn with_geometry(mut self, g: Geometry) -> Self {
+        self.geom = g;
+        self
+    }
+
+    pub fn with_transform(mut self, t: Transformation) -> Self {
+        self.transform = t;
+        self.inverse_transform = t.inverse();
+        self
+    }
+
+    pub fn transform(&self) -> &Transformation {
+        &self.transform
+    }
+
+    pub fn with_material(mut self, m: Material) -> Self {
+        self.material = m;
+        self
+    }
+
+    pub fn material(&self) -> &Material {
+        &self.material
+    }
+
+    pub fn material_mut(&mut self) -> &mut Material {
+        &mut self.material
+    }
+
     pub fn intersect<'a>(&'a self, ray_world: Ray) -> Intersections<'a> {
-        match self {
-            Shape::Sphere(s) => {
-                // world -> object space for this shape
-                let ray_obj = ray_world.transform(*s.inverse_transform());
-                Intersections::from_ts(s.local_intersect(ray_obj), self)
-            } // Shape::Plane(p) => {
-              //     let ray_obj = ray_world.transform(p.inverse_transform);
-              //     let ts = p.local_intersect(ray_obj);
-              //     Intersections::from_ts(ts, self)
-              // }
+        // world -> object space once, here
+        let ray_obj = ray_world.transform(self.inverse_transform);
+        match &self.geom {
+            Geometry::Sphere(s) => Intersections::from_ts(s.local_intersect(ray_obj), self),
+            // Geometry::Plane(p) => Intersections::from_ts(p.local_intersect(ray_obj), self),
         }
     }
 
     pub fn normal_at(&self, p_world: Point) -> Vector {
-        match self {
-            Shape::Sphere(s) => {
-                let inv = *s.inverse_transform();
-                let p_obj = inv * p_world;
+        // world -> object space once, here
+        let p_obj = self.inverse_transform * p_world;
 
-                // Note:  normal vectors are transformed using the transpose
-                // of the inverse of the transformation matrix, because this ensures
-                // that the transformed normal vector remains perpendicular to the transformed surface.
-                (inv.transpose() * s.local_normal_at(p_obj)).normalize()
-            } // Shape::Plane(p) => {
-              //     let inv = p.inverse_transform;
-              //     let p_obj = inv * p_world;
-              //     (inv.transpose() * p.local_normal_at(p_obj)).normalize()
-              // }
-        }
-    }
+        // ask the geometry for its local-space normal
+        let n_obj = match &self.geom {
+            Geometry::Sphere(s) => s.local_normal_at(p_obj),
+            // Geometry::Plane(p) => p.local_normal_at(p_obj),
+        };
 
-    pub fn with_transform(self, t: Transformation) -> Self {
-        match self {
-            Shape::Sphere(s) => Shape::Sphere(s.with_transform(t)),
-            // Shape::Plane(p) => Shape::Plane(p.with_transform(t)),
-        }
-    }
-
-    pub fn transform(&self) -> &Transformation {
-        match self {
-            Shape::Sphere(s) => s.transform(),
-            // Shape::Plane(p) => p.transform(),
-        }
-    }
-
-    pub fn with_material(self, m: Material) -> Self {
-        match self {
-            Shape::Sphere(s) => Shape::Sphere(s.with_material(m)),
-            // Shape::Plane(p) => Shape::Plane(p.with_material(m)),
-        }
-    }
-
-    pub fn material(&self) -> &Material {
-        match self {
-            Shape::Sphere(s) => s.material(),
-            // Shape::Plane(p) => p.material(),
-        }
-    }
-
-    pub fn material_mut(&mut self) -> &mut Material {
-        match self {
-            Shape::Sphere(s) => s.material_mut(),
-            // Shape::Plane(p) => p.material_mut(),
-        }
+        // transform normal back to world space using (inverse^T)
+        (self.inverse_transform.transpose() * n_obj).normalize()
     }
 }
 
 impl From<Sphere> for Shape {
     fn from(s: Sphere) -> Self {
-        Shape::Sphere(s)
+        Shape::sphere().with_geometry(Geometry::Sphere(s))
     }
 }

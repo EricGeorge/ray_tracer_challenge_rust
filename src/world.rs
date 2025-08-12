@@ -103,9 +103,10 @@ mod tests {
                 specular: 0.2,
                 ..Default::default()
             };
-            let sphere1 = Sphere::new().with_material(material);
-            let sphere2 = Sphere::new().with_transform(Transformation::scaling(0.5, 0.5, 0.5));
-            let objects = vec![Shape::from(sphere1), Shape::from(sphere2)];
+            let s1 = Shape::from(Sphere::new()).with_material(material);
+            let s2 =
+                Shape::from(Sphere::new()).with_transform(Transformation::scaling(0.5, 0.5, 0.5));
+            let objects = vec![s1, s2];
             Self::new(objects, light)
         }
     }
@@ -128,9 +129,9 @@ mod tests {
             specular: 0.2,
             ..Default::default()
         };
-        let sphere1 = Shape::from(Sphere::new().with_material(material));
+        let sphere1 = Shape::from(Sphere::new()).with_material(material);
         let sphere2 =
-            Shape::from(Sphere::new().with_transform(Transformation::scaling(0.5, 0.5, 0.5)));
+            Shape::from(Sphere::new()).with_transform(Transformation::scaling(0.5, 0.5, 0.5));
 
         assert_eq!(world.objects.len(), 2);
         assert_eq!(world.light, light);
@@ -223,15 +224,15 @@ mod tests {
         let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::WHITE);
         world.light = light;
 
-        let s1 = Sphere::new();
-        world.objects.push(Shape::from(s1));
+        let s1 = Shape::from(Sphere::new());
+        world.objects.push(s1);
 
-        let s2 = Sphere::new().with_transform(Transformation::translation(0.0, 0.0, 10.0));
-        world.objects.push(Shape::from(s2.clone()));
+        let s2 =
+            Shape::from(Sphere::new()).with_transform(Transformation::translation(0.0, 0.0, 10.0));
+        world.objects.push(s2.clone());
 
         let r = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
-        let shape = Shape::from(s2);
-        let i = Intersection::new(4.0, &shape);
+        let i = Intersection::new(4.0, &s2);
         let comps = i.prepare_computations(r);
         let c = world.shade_hit(comps);
 
@@ -241,9 +242,9 @@ mod tests {
     #[test]
     fn hit_should_offset_the_point() {
         let r = Ray::new(Point::new(0.0, 0.0, -5.0), Vector::new(0.0, 0.0, 1.0));
-        let s = Sphere::new().with_transform(Transformation::translation(0.0, 0.0, 1.0));
-        let shape = Shape::from(s);
-        let i = Intersection::new(5.0, &shape);
+        let s =
+            Shape::from(Sphere::new()).with_transform(Transformation::translation(0.0, 0.0, 1.0));
+        let i = Intersection::new(5.0, &s);
         let comps = i.prepare_computations(r);
 
         assert_abs_diff_eq!(comps.over_point.z, -EPSILON);

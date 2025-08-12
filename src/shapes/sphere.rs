@@ -1,76 +1,33 @@
-use crate::material::Material;
-use crate::matrix::Transformation;
 use crate::point::Point;
 use crate::ray::Ray;
 use crate::vector::Vector;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Sphere {
-    transform: Transformation,
-    material: Material,
-    inverse_transform: Transformation,
-}
+pub struct Sphere;
 
 impl Default for Sphere {
     fn default() -> Self {
-        Self {
-            transform: Transformation::identity(),
-            material: Material::default(),
-            inverse_transform: Transformation::identity(), // cache the inverse
-        }
+        Sphere
     }
 }
 
 impl Sphere {
-    const RADIUS: f64 = 1.0;
-
     pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn with_transform(mut self, transform: Transformation) -> Self {
-        self.transform = transform;
-        self.inverse_transform = transform.inverse();
-        self
-    }
-
-    pub fn with_material(mut self, material: Material) -> Self {
-        self.material = material;
-        self
-    }
-
-    pub fn material(&self) -> &Material {
-        &self.material
-    }
-
-    pub fn transform(&self) -> &Transformation {
-        &self.transform
-    }
-
-    pub fn inverse_transform(&self) -> &Transformation {
-        &self.inverse_transform
-    }
-
-    pub fn material_mut(&mut self) -> &mut Material {
-        &mut self.material
+        Sphere
     }
 
     // Compute the intersection of a ray and a sphere
-    // note that this function assumes the ray is already
-    // transformed into object space
+    // Assumes `ray_obj` is already in object space
     pub fn local_intersect(&self, ray_obj: Ray) -> Vec<f64> {
-        // *** compute the discriminant ***
         let sphere_to_ray = ray_obj.origin - Point::ORIGIN;
         let a = ray_obj.direction.dot(ray_obj.direction);
         let b = 2.0 * ray_obj.direction.dot(sphere_to_ray);
-        let c = sphere_to_ray.dot(sphere_to_ray) - Sphere::RADIUS.powi(2);
-        let discriminant = b * b - 4.0 * a * c;
+        let c = sphere_to_ray.dot(sphere_to_ray) - 1.0_f64; // Sphere::RADIUS.powi(2)
 
-        // if the discriminant is negative, there are no intersections
+        let discriminant = b * b - 4.0 * a * c;
         if discriminant < 0.0 {
             Vec::new()
         } else {
-            // solve the quadratic for the intersection points
             let sqrt_disc = discriminant.sqrt();
             let q = if b < 0.0 {
                 (-b + sqrt_disc) / 2.0
@@ -83,11 +40,9 @@ impl Sphere {
         }
     }
 
-    // Compute the normal of the sphere at this point
-    // assumes the point is in object space
+    // Object-space normal
     pub fn local_normal_at(&self, p_obj: Point) -> Vector {
-        let object_normal = p_obj - Point::ORIGIN;
-        object_normal.normalize()
+        (p_obj - Point::ORIGIN).normalize()
     }
 }
 
@@ -95,6 +50,7 @@ impl Sphere {
 mod tests {
     use super::*;
     use crate::color::Color;
+    use crate::material::Material;
     use crate::matrix::Matrix;
     use crate::matrix::Transformation;
     use crate::point_light::PointLight;
