@@ -6,12 +6,13 @@ use crate::shapes::Shape;
 use crate::utils::EPSILON;
 use crate::vector::Vector;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Intersection<'a> {
     pub t: f64,
     pub s: &'a Shape,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Computations<'a> {
     pub object: &'a Shape,
     pub point: Point,
@@ -66,6 +67,7 @@ impl<'a> AbsDiffEq for Intersection<'a> {
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Intersections<'a> {
     list: Vec<Intersection<'a>>,
 }
@@ -98,20 +100,14 @@ impl<'a> Intersections<'a> {
         &self.list
     }
 
-    // we re-sort on extend so that we always have a sorted list
-    pub fn extend(&mut self, other: Intersections<'a>) {
-        self.list.extend(other.list);
-        self.list
-            .sort_unstable_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Equal));
+    // Create from a list that is already sorted by `t` (ascending).
+    pub fn from_sorted(list: Vec<Intersection<'a>>) -> Self {
+        debug_assert!(list.windows(2).all(|w| w[0].t <= w[1].t));
+        Self { list }
     }
 
-    pub fn from_ts<I: IntoIterator<Item = f64>>(ts: I, shape: &'a Shape) -> Self {
-        let mut v = Vec::new();
-        for t in ts {
-            v.push(Intersection::new(t, shape));
-        }
-
-        Intersections::new(v)
+    pub fn into_vec(self) -> Vec<Intersection<'a>> {
+        self.list
     }
 }
 

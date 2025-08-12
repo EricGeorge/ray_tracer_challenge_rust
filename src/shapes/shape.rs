@@ -1,4 +1,5 @@
 // use crate::Sphere;
+use crate::intersection::Intersection;
 use crate::intersection::Intersections;
 use crate::material::Material;
 use crate::matrix::Transformation;
@@ -63,7 +64,16 @@ impl Shape {
         // world -> object space once, here
         let ray_obj = ray_world.transform(self.inverse_transform);
         match &self.geom {
-            Geometry::Sphere(s) => Intersections::from_ts(s.local_intersect(ray_obj), self),
+            Geometry::Sphere(s) => match s.local_intersect(ray_obj) {
+                None => Intersections::empty(),
+                Some((t1, t2)) => {
+                    let list = vec![
+                        Intersection { t: t1, s: self },
+                        Intersection { t: t2, s: self },
+                    ];
+                    Intersections::from_sorted(list)
+                }
+            },
             // Geometry::Plane(p) => Intersections::from_ts(p.local_intersect(ray_obj), self),
         }
     }

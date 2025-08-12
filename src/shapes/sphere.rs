@@ -18,7 +18,7 @@ impl Sphere {
 
     // Compute the intersection of a ray and a sphere
     // Assumes `ray_obj` is already in object space
-    pub fn local_intersect(&self, ray_obj: Ray) -> Vec<f64> {
+    pub fn local_intersect(&self, ray_obj: Ray) -> Option<(f64, f64)> {
         let sphere_to_ray = ray_obj.origin - Point::ORIGIN;
         let a = ray_obj.direction.dot(ray_obj.direction);
         let b = 2.0 * ray_obj.direction.dot(sphere_to_ray);
@@ -26,7 +26,7 @@ impl Sphere {
 
         let discriminant = b * b - 4.0 * a * c;
         if discriminant < 0.0 {
-            Vec::new()
+            None
         } else {
             let sqrt_disc = discriminant.sqrt();
             let q = if b < 0.0 {
@@ -36,7 +36,10 @@ impl Sphere {
             };
             let t1 = q / a;
             let t2 = c / q;
-            vec![t1, t2]
+
+            // Sort ascending so callers don't care about order.
+            let (lo, hi) = if t1 <= t2 { (t1, t2) } else { (t2, t1) };
+            Some((lo, hi))
         }
     }
 
