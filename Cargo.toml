@@ -21,3 +21,6 @@ name = "shading"
 
 [[example]]
 name = "scene"
+
+[[example]]
+name = "plane"
