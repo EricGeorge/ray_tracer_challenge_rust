@@ -57,6 +57,10 @@ impl Shape {
         &self.transform
     }
 
+    pub fn inverse_transform(&self) -> &Transformation {
+        &self.inverse_transform
+    }
+
     pub fn with_material(mut self, m: Material) -> Self {
         self.material = m;
         self

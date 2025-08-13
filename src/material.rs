@@ -72,7 +72,7 @@ impl Material {
     ) -> Color {
         // combine the surface color iwth the ligth's color/intensity
         let effective_color = if let Some(pattern) = &self.pattern {
-            pattern.stripe_at_object(object, position)
+            pattern.pattern_at_object(object, position)
         } else {
             self.color * light.intensity
         };
