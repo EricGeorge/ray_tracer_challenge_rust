@@ -135,7 +135,7 @@ impl Camera {
                     let pct = 100.0 * (n as f64) / (total as f64);
                     let elapsed = start.elapsed();
                     // \r returns to line start, flush forces immediate update
-                    print!("\rProgress: {:>6.2}%  Elapsed Time: {:?}", pct, elapsed);
+                    print!("\rProgress: {pct:>6.2}%  Elapsed Time: {elapsed:?}");
                     std::io::stdout().flush().unwrap();
                 }
 
