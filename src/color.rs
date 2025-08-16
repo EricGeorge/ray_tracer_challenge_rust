@@ -101,6 +101,16 @@ impl Color {
     }
 }
 
+impl Color {
+    pub fn clamp01(self) -> Self {
+        Self::new(
+            self.red.clamp(0.0, 1.0),
+            self.green.clamp(0.0, 1.0),
+            self.blue.clamp(0.0, 1.0),
+        )
+    }
+}
+
 impl ops::Add for Color {
     type Output = Self;
 
