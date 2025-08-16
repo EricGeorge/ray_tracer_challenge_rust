@@ -15,6 +15,7 @@ pub struct Shape {
     inverse_transform: Transformation, // cached inverse
     material: Material,
     geom: Geometry,
+    uv_map: Option<fn(Point) -> (f64, f64)>, // function to map points to UV coordinates
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -30,6 +31,7 @@ impl Shape {
             inverse_transform: Transformation::identity(),
             material: Material::default(),
             geom: Geometry::Sphere(Sphere::new()),
+            uv_map: Some(spherical_map),
         }
     }
 
@@ -39,6 +41,7 @@ impl Shape {
             inverse_transform: Transformation::identity(),
             material: Material::default(),
             geom: Geometry::Plane(Plane::new()),
+            uv_map: None,
         }
     }
 
@@ -72,6 +75,10 @@ impl Shape {
 
     pub fn material_mut(&mut self) -> &mut Material {
         &mut self.material
+    }
+
+    pub fn uv_map(&self) -> Option<fn(Point) -> (f64, f64)> {
+        self.uv_map
     }
 
     pub fn intersect<'a>(&'a self, ray_world: Ray) -> Intersections<'a> {
@@ -116,5 +123,34 @@ impl From<Sphere> for Shape {
 impl From<Plane> for Shape {
     fn from(s: Plane) -> Self {
         Shape::plane().with_geometry(Geometry::Plane(s))
+    }
+}
+
+fn spherical_map(point: Point) -> (f64, f64) {
+    let theta = point.x.atan2(point.z);
+    let vec = Vector::new(point.x, point.y, point.z);
+    let radius = vec.magnitude();
+    let phi = (point.y / radius).acos();
+    let raw_u = theta / (2.0 * std::f64::consts::PI);
+    let u = 1.0 - (raw_u + 0.5);
+    let v = 1.0 - (phi / std::f64::consts::PI);
+    (u, v)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn using_spherical_mapping_on_3d_point() {
+        assert_eq!(spherical_map(Point::new(0.0, 0.0, -1.0)), (0.0, 0.5));
+        assert_eq!(spherical_map(Point::new(1.0, 0.0, 0.0)), (0.25, 0.5));
+        assert_eq!(spherical_map(Point::new(0.0, 0.0, 1.0)), (0.5, 0.5));
+        assert_eq!(spherical_map(Point::new(-1.0, 0.0, 0.0)), (0.75, 0.5));
+        assert_eq!(spherical_map(Point::new(0.0, 1.0, 0.0)), (0.5, 1.0));
+        assert_eq!(spherical_map(Point::new(0.0, -1.0, 0.0)), (0.5, 0.0));
+        assert_eq!(
+            spherical_map(Point::new(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0)),
+            (0.25, 0.75)
+        );
     }
 }

@@ -10,6 +10,8 @@ pub struct Pattern {
     pattern_type: PatternType,
     a: Color,
     b: Color,
+    width: f64,
+    height: f64,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -18,6 +20,7 @@ pub enum PatternType {
     Gradient,
     Ring,
     Checker,
+    CheckerUV,
 }
 
 impl Pattern {
@@ -28,6 +31,8 @@ impl Pattern {
             pattern_type: PatternType::Striped,
             a,
             b,
+            width: 1.0,
+            height: 1.0,
         }
     }
 
@@ -38,6 +43,8 @@ impl Pattern {
             pattern_type: PatternType::Gradient,
             a,
             b,
+            width: 1.0,
+            height: 1.0,
         }
     }
 
@@ -48,6 +55,8 @@ impl Pattern {
             pattern_type: PatternType::Ring,
             a,
             b,
+            width: 1.0,
+            height: 1.0,
         }
     }
 
@@ -58,6 +67,20 @@ impl Pattern {
             pattern_type: PatternType::Checker,
             a,
             b,
+            width: 1.0,
+            height: 1.0,
+        }
+    }
+
+    pub fn checker_uv(width: f64, height: f64, a: Color, b: Color) -> Self {
+        Self {
+            transform: Transformation::identity(),
+            inverse_transform: Transformation::identity(),
+            pattern_type: PatternType::CheckerUV,
+            a,
+            b,
+            width,
+            height,
         }
     }
 
@@ -85,6 +108,7 @@ impl Pattern {
             PatternType::Gradient => self.gradient_at(pattern_point),
             PatternType::Ring => self.ring_at(pattern_point),
             PatternType::Checker => self.checker_at(pattern_point),
+            PatternType::CheckerUV => self.checker_uv_at(pattern_point, object.uv_map()),
         }
     }
 
@@ -113,6 +137,24 @@ impl Pattern {
 
     fn checker_at(&self, point: Point) -> Color {
         if (point.x.floor() + point.y.floor() + point.z.floor()) as i32 % 2 == 0 {
+            self.a
+        } else {
+            self.b
+        }
+    }
+
+    fn checker_uv_at(&self, point: Point, uv_map: Option<fn(Point) -> (f64, f64)>) -> Color {
+        if let Some(uv_fn) = uv_map {
+            let (u, v) = uv_fn(point);
+            self.checker_uv_pattern_at(u, v)
+        } else {
+            // Fallback: return color a if no uv_map is provided
+            self.a
+        }
+    }
+
+    fn checker_uv_pattern_at(&self, u: f64, v: f64) -> Color {
+        if ((u * self.width).floor() as i32 + (v * self.height).floor() as i32) % 2 == 0 {
             self.a
         } else {
             self.b
@@ -253,5 +295,61 @@ mod tests {
         assert_eq!(pattern.checker_at(Point::new(0.0, 0.0, 0.0)), Color::WHITE);
         assert_eq!(pattern.checker_at(Point::new(0.0, 0.0, 0.99)), Color::WHITE);
         assert_eq!(pattern.checker_at(Point::new(0.0, 0.0, 1.01)), Color::BLACK);
+    }
+
+    #[test]
+    fn checker_pattern_in_2d() {
+        let pattern = Pattern::checker_uv(2.0, 2.0, Color::BLACK, Color::WHITE);
+        assert_eq!(pattern.checker_uv_pattern_at(0.0, 0.0), Color::BLACK);
+        assert_eq!(pattern.checker_uv_pattern_at(0.5, 0.0), Color::WHITE);
+        assert_eq!(pattern.checker_uv_pattern_at(0.0, 0.5), Color::WHITE);
+        assert_eq!(pattern.checker_uv_pattern_at(0.5, 0.5), Color::BLACK);
+        assert_eq!(pattern.checker_uv_pattern_at(1.0, 1.0), Color::BLACK);
+    }
+
+    #[test]
+    fn using_texture_map_pattern_with_spherical_map() {
+        let pattern = Pattern::checker_uv(16.0, 8.0, Color::BLACK, Color::WHITE);
+        let sphere = Shape::from(Sphere::new());
+        assert_eq!(
+            pattern.pattern_at_object(&sphere, Point::new(0.4315, 0.4670, 0.7719)),
+            Color::WHITE
+        );
+        assert_eq!(
+            pattern.pattern_at_object(&sphere, Point::new(-0.9654, 0.2552, -0.0534)),
+            Color::BLACK
+        );
+        assert_eq!(
+            pattern.pattern_at_object(&sphere, Point::new(0.1039, 0.7090, 0.6975)),
+            Color::WHITE
+        );
+        assert_eq!(
+            pattern.pattern_at_object(&sphere, Point::new(-0.4986, -0.7856, -0.3663)),
+            Color::BLACK
+        );
+        assert_eq!(
+            pattern.pattern_at_object(&sphere, Point::new(-0.0317, -0.9395, 0.3411)),
+            Color::BLACK
+        );
+        assert_eq!(
+            pattern.pattern_at_object(&sphere, Point::new(0.4809, -0.7721, 0.4154)),
+            Color::BLACK
+        );
+        assert_eq!(
+            pattern.pattern_at_object(&sphere, Point::new(0.0285, -0.9612, -0.2745)),
+            Color::BLACK
+        );
+        assert_eq!(
+            pattern.pattern_at_object(&sphere, Point::new(-0.5734, -0.2162, -0.7903)),
+            Color::WHITE
+        );
+        assert_eq!(
+            pattern.pattern_at_object(&sphere, Point::new(0.7688, -0.1470, 0.6223)),
+            Color::BLACK
+        );
+        assert_eq!(
+            pattern.pattern_at_object(&sphere, Point::new(-0.7652, 0.2175, 0.6060)),
+            Color::BLACK
+        );
     }
 }
