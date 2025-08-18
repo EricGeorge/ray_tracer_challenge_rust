@@ -39,6 +39,7 @@ pub struct Computations<'a> {
     pub normal_vector: Vector,
     pub inside: bool,
     pub over_point: Point,
+    pub reflect_vector: Vector,
 }
 
 impl<'a> Intersection<'a> {
@@ -52,12 +53,14 @@ impl<'a> Intersection<'a> {
         let eye_vector = -ray.direction;
         let normal_vector = self.s.normal_at(point);
         let inside = normal_vector.dot(eye_vector) < 0.0;
+
         let normal_vector = if inside {
             -normal_vector
         } else {
             normal_vector
         };
 
+        let reflect_vector = ray.direction.reflect(normal_vector);
         // due to floating point math errors, we need to offset the point slightly
         // as it can sometimes calculate the point to be just below the surface of the sphere
         // instead we nudge it slightly in the normal direction so it's outside of the sphere
@@ -70,6 +73,7 @@ impl<'a> Intersection<'a> {
             normal_vector,
             inside,
             over_point,
+            reflect_vector,
         }
     }
 }
@@ -135,6 +139,7 @@ mod tests {
     use super::*;
     use crate::point::Point;
     use crate::ray::Ray;
+    use crate::shapes::Plane;
     use crate::shapes::Sphere;
     use crate::vector::Vector;
     use approx::assert_abs_diff_eq;
@@ -243,5 +248,21 @@ mod tests {
         assert_eq!(comps.eye_vector, Vector::new(0.0, 0.0, -1.0));
         assert_eq!(comps.normal_vector, Vector::new(0.0, 0.0, -1.0));
         assert!(comps.inside);
+    }
+
+    #[test]
+    fn prepare_computations_reflection() {
+        let r = Ray::new(
+            Point::new(0.0, 1.0, -1.0),
+            Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let s = Shape::from(Plane::new());
+        let i = Intersection::new(2.0_f64.sqrt(), &s);
+        let comps = i.prepare_computations(r);
+
+        assert_eq!(
+            comps.reflect_vector,
+            Vector::new(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
+        );
     }
 }

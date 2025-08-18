@@ -81,7 +81,7 @@ impl Camera {
                 let direction = (pixel - origin).normalize();
                 let ray = Ray::new(origin, direction);
 
-                world.color_at(ray)
+                world.color_at(ray, 5)
             })
             .collect();
 
@@ -127,7 +127,7 @@ impl Camera {
                 let direction = (pixel - origin).normalize();
                 let ray = Ray::new(origin, direction);
 
-                let c = world.color_at(ray);
+                let c = world.color_at(ray, 5);
 
                 // progress display
                 let n = progress.fetch_add(1, Ordering::Relaxed) + 1;

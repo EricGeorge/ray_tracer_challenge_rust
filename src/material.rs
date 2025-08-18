@@ -13,6 +13,7 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
+    pub reflective: f64,
 }
 
 impl Default for Material {
@@ -24,6 +25,7 @@ impl Default for Material {
             diffuse: 0.9,
             specular: 0.9,
             shininess: 200.0,
+            reflective: 0.0,
         }
     }
 }
@@ -36,6 +38,7 @@ impl Material {
         diffuse: f64,
         specular: f64,
         shininess: f64,
+        reflective: f64,
     ) -> Self {
         Self {
             color,
@@ -44,6 +47,7 @@ impl Material {
             diffuse,
             specular,
             shininess,
+            reflective,
         }
     }
 
@@ -128,17 +132,26 @@ mod tests {
 
     #[test]
     fn custom_material() {
-        let m = Material::new(Color::new(0.2, 0.8, 0.7), None, 0.2, 0.8, 0.7, 150.0);
+        let m = Material::new(Color::new(0.2, 0.8, 0.7), None, 0.2, 0.8, 0.7, 150.0, 0.0);
         assert_abs_diff_eq!(m.ambient, 0.2);
         assert_abs_diff_eq!(m.diffuse, 0.8);
         assert_abs_diff_eq!(m.specular, 0.7);
         assert_abs_diff_eq!(m.shininess, 150.0);
+        assert_abs_diff_eq!(m.reflective, 0.0);
     }
 
     #[test]
     fn lighting_with_a_pattern_applied() {
         let pattern = Pattern::striped(Color::new(1.0, 1.0, 1.0), Color::new(0.0, 0.0, 0.0));
-        let m = Material::new(Color::new(1.0, 1.0, 1.0), Some(pattern), 1.0, 0.0, 0.0, 0.0);
+        let m = Material::new(
+            Color::new(1.0, 1.0, 1.0),
+            Some(pattern),
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        );
         let eye_vector = Vector::new(0.0, 0.0, -1.0);
         let normal_vector = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));
