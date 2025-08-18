@@ -74,7 +74,7 @@ impl Material {
         normal: Vector,
         in_shadow: bool,
     ) -> Color {
-        // combine the surface color iwth the ligth's color/intensity
+        // combine the surface color with the light's color/intensity
         let effective_color = if let Some(pattern) = &self.pattern {
             pattern.pattern_at_object(object, position)
         } else {

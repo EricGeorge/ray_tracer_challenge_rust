@@ -96,7 +96,7 @@ impl Camera {
 
     pub fn render_with_progress(&self, world: &World) -> Canvas
     where
-        World: Sync, // shareable across threads
+        World: Sync,
     {
         let w = self.hsize;
         let h = self.vsize;

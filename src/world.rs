@@ -23,35 +23,21 @@ impl World {
         }
     }
 
-    // pub fn intersections<'a>(&'a self, ray: Ray) -> Intersections<'a> {
-    //     let mut intersections = Intersections::empty();
-    //     for object in &self.objects {
-    //         intersections.extend(object.intersect(ray));
-    //     }
-    //     intersections
-    // }
-
+    // return a list of sorted intersections for the given ray
     pub fn intersections<'a>(&'a self, ray: Ray) -> Intersections<'a> {
-        // Worst case: 2 intersections per object (spheres). Reserve to avoid re-allocs.
         let mut all = Vec::with_capacity(self.objects.len() * 2);
 
         for obj in &self.objects {
-            // If your `Shape::intersect` returns `Intersections<'a>`,
-            // prefer an owning extractor; fallback to `all().iter().cloned()`.
             let ints = obj.intersect(ray);
-
-            // Option A (preferred if you add `into_vec()`):
             all.extend(ints.into_vec());
-
-            // Option B (works with your current API):
-            // all.extend(ints.all().iter().cloned());
         }
 
-        // Single sort here
         all.sort_unstable_by(|a, b| a.t.partial_cmp(&b.t).unwrap());
 
         Intersections::from_sorted(all)
     }
+
+    // TODO - ideally, shade_hit and color_at should be combined into a single fn
 
     // returns the color at the intersection encapsulated by `comps`
     // in the context of the world

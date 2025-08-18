@@ -127,12 +127,33 @@ impl From<Plane> for Shape {
 }
 
 fn spherical_map(point: Point) -> (f64, f64) {
+    //   compute the azimuthal angle
+    //   -π < theta <= π
+    //   angle increases clockwise as viewed from above,
+    //   which is opposite of what we want, but we'll fix it later.
     let theta = point.x.atan2(point.z);
+
+    // vec is the vector pointing from the sphere's origin (the world origin)
+    // to the point, which will also happen to be exactly equal to the sphere's
+    // radius.
     let vec = Vector::new(point.x, point.y, point.z);
     let radius = vec.magnitude();
+
+    // compute the polar angle
+    // 0 <= phi <= π
     let phi = (point.y / radius).acos();
+
+    // -0.5 < raw_u <= 0.5
     let raw_u = theta / (2.0 * std::f64::consts::PI);
+
+    // 0 <= u < 1
+    // here's also where we fix the direction of u. Subtract it from 1,
+    // so that it increases counterclockwise as viewed from above.
     let u = 1.0 - (raw_u + 0.5);
+
+    // we want v to be 0 at the south pole of the sphere,
+    // and 1 at the north pole, so we have to "flip it over"
+    // by subtracting it from 1.
     let v = 1.0 - (phi / std::f64::consts::PI);
     (u, v)
 }
