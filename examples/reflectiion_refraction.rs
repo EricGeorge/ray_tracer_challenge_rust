@@ -168,35 +168,43 @@ fn render_scene(hsize: usize, vsize: usize, path: &str) {
         });
     world.objects.push(red_sphere);
 
-    //     # blue glass sphere
-    // - add: sphere
-    //   transform:
-    //     - [ scale, 0.7, 0.7, 0.7 ]
-    //     - [ translate, 0.6, 0.7, -0.6 ]
-    //   material:
-    //     color: [0, 0, 0.2]
-    //     ambient: 0
-    //     diffuse: 0.4
-    //     specular: 0.9
-    //     shininess: 300
-    //     reflective: 0.9
-    //     transparency: 0.9
-    //     refractive-index: 1.5
+    // blue glass sphere
+    let blue_glass_material = Material {
+        color: Color::new(0.0, 0.0, 0.2),
+        ambient: 0.0,
+        diffuse: 0.4,
+        specular: 0.9,
+        shininess: 300.0,
+        reflective: 0.9,
+        // transparency: 0.9,
+        // refractive_index: 1.5,
+        ..Default::default()
+    };
+    let blue_glass_sphere = Shape::from(Sphere::new())
+        .with_transform(
+            Transformation::scaling(0.7, 0.7, 0.7) * Transformation::translation(0.6, 0.7, -0.6),
+        )
+        .with_material(blue_glass_material);
+    world.objects.push(blue_glass_sphere);
 
-    // # green glass sphere
-    // - add: sphere
-    //   transform:
-    //     - [ scale, 0.5, 0.5, 0.5 ]
-    //     - [ translate, -0.7, 0.5, -0.8 ]
-    //   material:
-    //     color: [0, 0.2, 0]
-    //     ambient: 0
-    //     diffuse: 0.4
-    //     specular: 0.9
-    //     shininess: 300
-    //     reflective: 0.9
-    //     transparency: 0.9
-    //     refractive-index: 1.5
+    // green glass sphere
+    let green_glass_material = Material {
+        color: Color::new(0.0, 0.2, 0.0),
+        ambient: 0.0,
+        diffuse: 0.4,
+        specular: 0.9,
+        shininess: 300.0,
+        reflective: 0.9,
+        // transparency: 0.9,
+        // refractive_index: 1.5,
+        ..Default::default()
+    };
+    let green_glass_sphere = Shape::from(Sphere::new())
+        .with_transform(
+            Transformation::scaling(0.5, 0.5, 0.5) * Transformation::translation(-0.7, 0.5, -0.8),
+        )
+        .with_material(green_glass_material);
+    world.objects.push(green_glass_sphere);
 
     let canvas = camera.render_with_progress(&world);
     canvas.write_ppm(path);
