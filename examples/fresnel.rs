@@ -58,8 +58,8 @@ fn render_scene(hsize: usize, vsize: usize, path: &str) {
         specular: 0.9,
         shininess: 300.0,
         reflective: 0.9,
-        // transparency: 0.9,
-        // refractive_index: 1.5,
+        transparency: 0.9,
+        refractive_index: 1.5,
     };
 
     let glass_sphere = Shape::from(Sphere::new()).with_material(glass_sphere_material);
@@ -74,8 +74,8 @@ fn render_scene(hsize: usize, vsize: usize, path: &str) {
         specular: 0.9,
         shininess: 300.0,
         reflective: 0.9,
-        // transparency: 0.9,
-        // refractive_index: 1.0000034,
+        transparency: 0.9,
+        refractive_index: 1.0000034,
     };
 
     let hollow_center = Shape::from(Sphere::new())

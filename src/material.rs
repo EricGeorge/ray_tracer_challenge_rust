@@ -14,6 +14,8 @@ pub struct Material {
     pub specular: f64,
     pub shininess: f64,
     pub reflective: f64,
+    pub transparency: f64,
+    pub refractive_index: f64,
 }
 
 impl Default for Material {
@@ -26,29 +28,69 @@ impl Default for Material {
             specular: 0.9,
             shininess: 200.0,
             reflective: 0.0,
+            transparency: 0.0,
+            refractive_index: 1.0,
         }
     }
 }
 
 impl Material {
-    pub fn new(
-        color: Color,
-        pattern: Option<Pattern>,
-        ambient: f64,
-        diffuse: f64,
-        specular: f64,
-        shininess: f64,
-        reflective: f64,
-    ) -> Self {
-        Self {
-            color,
-            pattern,
-            ambient,
-            diffuse,
-            specular,
-            shininess,
-            reflective,
-        }
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn with_ambient(mut self, ambient: f64) -> Material {
+        self.ambient = ambient;
+
+        self
+    }
+
+    pub fn with_color(mut self, color: Color) -> Material {
+        self.color = color;
+
+        self
+    }
+
+    pub fn with_diffuse(mut self, diffuse: f64) -> Material {
+        self.diffuse = diffuse;
+
+        self
+    }
+
+    pub fn with_pattern(mut self, pattern: Pattern) -> Material {
+        self.pattern = Some(pattern);
+
+        self
+    }
+
+    pub fn with_reflective(mut self, reflective: f64) -> Material {
+        self.reflective = reflective;
+
+        self
+    }
+
+    pub fn with_refractive_index(mut self, index: f64) -> Material {
+        self.refractive_index = index;
+
+        self
+    }
+
+    pub fn with_shininess(mut self, index: f64) -> Material {
+        self.shininess = index;
+
+        self
+    }
+
+    pub fn with_specular(mut self, specular: f64) -> Material {
+        self.specular = specular;
+
+        self
+    }
+
+    pub fn with_transparency(mut self, transparency: f64) -> Material {
+        self.transparency = transparency;
+
+        self
     }
 
     // calculate the lighting at the position on the sphere using the Phong Reflection Model
@@ -132,7 +174,15 @@ mod tests {
 
     #[test]
     fn custom_material() {
-        let m = Material::new(Color::new(0.2, 0.8, 0.7), None, 0.2, 0.8, 0.7, 150.0, 0.0);
+        let m = Material::new()
+            .with_color(Color::new(0.2, 0.8, 0.7))
+            .with_ambient(0.2)
+            .with_diffuse(0.8)
+            .with_specular(0.7)
+            .with_shininess(150.0)
+            .with_reflective(0.0)
+            .with_transparency(0.0)
+            .with_refractive_index(1.0);
         assert_abs_diff_eq!(m.ambient, 0.2);
         assert_abs_diff_eq!(m.diffuse, 0.8);
         assert_abs_diff_eq!(m.specular, 0.7);
@@ -143,15 +193,13 @@ mod tests {
     #[test]
     fn lighting_with_a_pattern_applied() {
         let pattern = Pattern::striped(Color::new(1.0, 1.0, 1.0), Color::new(0.0, 0.0, 0.0));
-        let m = Material::new(
-            Color::new(1.0, 1.0, 1.0),
-            Some(pattern),
-            1.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        );
+        let m = Material::new()
+            .with_color(Color::new(1.0, 1.0, 1.0))
+            .with_pattern(pattern)
+            .with_ambient(1.0)
+            .with_diffuse(0.0)
+            .with_specular(0.0)
+            .with_shininess(0.0);
         let eye_vector = Vector::new(0.0, 0.0, -1.0);
         let normal_vector = Vector::new(0.0, 0.0, -1.0);
         let light = PointLight::new(Point::new(0.0, 0.0, -10.0), Color::new(1.0, 1.0, 1.0));

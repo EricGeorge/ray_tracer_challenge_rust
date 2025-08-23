@@ -65,7 +65,7 @@ impl World {
         match hit {
             Some(hit) => {
                 // compute the shading at the intersection point
-                let comps = hit.prepare_computations(ray);
+                let comps = hit.prepare_computations(ray, &intersections);
                 self.shade_hit(comps, remaining)
             }
 
@@ -260,7 +260,7 @@ mod tests {
 
         let r = Ray::new(Point::new(0.0, 0.0, 5.0), Vector::new(0.0, 0.0, 1.0));
         let i = Intersection::new(4.0, &s2);
-        let comps = i.prepare_computations(r);
+        let comps = i.prepare_computations(r, &Intersections::new(vec![i.clone()]));
         let c = world.shade_hit(comps, 5);
 
         assert_abs_diff_eq!(c, Color::new(0.1, 0.1, 0.1));
@@ -272,7 +272,7 @@ mod tests {
         let s =
             Shape::from(Sphere::new()).with_transform(Transformation::translation(0.0, 0.0, 1.0));
         let i = Intersection::new(5.0, &s);
-        let comps = i.prepare_computations(r);
+        let comps = i.prepare_computations(r, &Intersections::new(vec![i.clone()]));
 
         assert_abs_diff_eq!(comps.over_point.z, -EPSILON);
     }
@@ -287,7 +287,7 @@ mod tests {
             material.ambient = 1.0;
         }
         let i = Intersection::new(1.0, &shape);
-        let comps = i.prepare_computations(ray);
+        let comps = i.prepare_computations(ray, &Intersections::new(vec![i.clone()]));
         let color = world.reflected_color(comps, 0);
         assert_eq!(color, Color::BLACK);
     }
@@ -306,7 +306,7 @@ mod tests {
             Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
         let i = Intersection::new(2.0_f64.sqrt(), &shape);
-        let comps = i.prepare_computations(ray);
+        let comps = i.prepare_computations(ray, &Intersections::new(vec![i.clone()]));
         let color = world.reflected_color(comps, 1);
         assert_abs_diff_eq!(color, Color::new(0.19032, 0.2379, 0.14274));
     }
@@ -325,7 +325,7 @@ mod tests {
             Vector::new(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
         let i = Intersection::new(2.0_f64.sqrt(), &shape);
-        let comps = i.prepare_computations(ray);
+        let comps = i.prepare_computations(ray, &Intersections::new(vec![i.clone()]));
         let color = world.shade_hit(comps, 1);
         assert_abs_diff_eq!(color, Color::new(0.87677, 0.92436, 0.82918));
     }
@@ -370,7 +370,7 @@ mod tests {
         );
 
         let i = Intersection::new(2.0_f64.sqrt(), &world.objects[0]);
-        let comps = i.prepare_computations(ray);
+        let comps = i.prepare_computations(ray, &Intersections::new(vec![i.clone()]));
         let color = world.reflected_color(comps, 0);
 
         assert_eq!(color, Color::BLACK);

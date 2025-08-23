@@ -35,6 +35,18 @@ impl Shape {
         }
     }
 
+    pub fn glass_sphere() -> Self {
+        Self {
+            transform: Transformation::identity(),
+            inverse_transform: Transformation::identity(),
+            material: Material::default()
+                .with_transparency(1.0)
+                .with_refractive_index(1.5),
+            geom: Geometry::Sphere(Sphere::new()),
+            uv_map: Some(spherical_map),
+        }
+    }
+
     pub fn plane() -> Self {
         Self {
             transform: Transformation::identity(),
@@ -173,5 +185,13 @@ mod tests {
             spherical_map(Point::new(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0)),
             (0.25, 0.75)
         );
+    }
+
+    #[test]
+    fn sphere_with_glassy_material() {
+        let s = Shape::glass_sphere();
+        assert_eq!(s.transform(), &Transformation::identity());
+        assert_eq!(s.material().transparency, 1.0);
+        assert_eq!(s.material().refractive_index, 1.5);
     }
 }
