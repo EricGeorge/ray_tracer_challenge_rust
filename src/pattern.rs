@@ -29,6 +29,7 @@ pub enum PatternType {
     Ring,
     Checker,
     CheckerUV { width: f64, height: f64 },
+    Test,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -99,6 +100,17 @@ impl Pattern {
         }
     }
 
+    pub fn test() -> Self {
+        /* ... */
+        Self {
+            transform: Transformation::identity(),
+            inverse_transform: Transformation::identity(),
+            pattern_type: PatternType::Test,
+            a: Color::WHITE.into(),
+            b: Color::BLACK.into(),
+        }
+    }
+
     pub fn with_transform(mut self, t: Transformation) -> Self {
         self.transform = t;
         self.inverse_transform = t.inverse();
@@ -147,6 +159,7 @@ impl Pattern {
             PatternType::CheckerUV { width, height } => {
                 self.checker_uv_at(pattern_point, object, *width, *height)
             }
+            PatternType::Test => Color::new(pattern_point.x, pattern_point.y, pattern_point.z),
         }
     }
 
