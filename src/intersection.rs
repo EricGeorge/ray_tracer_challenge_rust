@@ -126,7 +126,7 @@ impl<'a> Computations<'a> {
         // total internal reflection can only occur if n1 > n2
         if self.n1 > self.n2 {
             let n_ratio = self.n1 / self.n2;
-            let sin2_t = n_ratio * n_ratio * (1.0 - cos * cos);
+            let sin2_t = n_ratio.powi(2) * (1.0 - cos.powi(2));
             if sin2_t > 1.0 {
                 return 1.0;
             }
